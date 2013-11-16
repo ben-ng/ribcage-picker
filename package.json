@@ -1,0 +1,38 @@
+{
+  "name": "ribcage-switcher",
+  "version": "0.0.1",
+  "description": "A iOS-inspired UIPickerView for ribcage-ui",
+  "main": "picker.js",
+  "dependencies": {
+    "lodash.foreach": "2.3.x",
+    "lodash.bind": "2.3.x",
+    "lodash.map": "2.3.x",
+    "hbsfy": "1.0.x"
+  },
+  "devDependencies": {
+    "browserify": "2.35.x",
+    "ribcage-view": "0.0.x",
+    "jquery-browserify": "1.8.x",
+    "backbone": "1.0.x",
+    "mkdirp": "0.3.x",
+    "cpr": "0.1.x"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/ben-ng/ribcage-picker.git"
+  },
+  "keywords": [
+    "ribcage-view",
+    "ribcage-ui",
+    "backbone"
+  ],
+  "browserify": {
+    "transform": "hbsfy"
+  },
+  "style": "picker.css",
+  "author": "Ben Ng <me@benng.me> (http://benng.me)",
+  "license": "MIT"
+}

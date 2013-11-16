@@ -38,8 +38,8 @@ Picker = Ribcage.extend({
 
     each(this.slots, function (slot, key) {
       /**
-      * This function is called when a slot stops scrolling outside its valid boundaries
-      * we bind it with these values for simplicty's sake.
+      * This function is called when a slot stops scrolling outside its valid boundaries.
+      * We bind it with these values to make backWithinBoundaries faster and simpler.
       */
       slot.backWithinBoundaries = bind(self.backWithinBoundaries, self, slot, key);
     });
@@ -49,7 +49,6 @@ Picker = Ribcage.extend({
     */
     this.tapCancel = bind(this.tapCancel, this);
     this.tapUp = bind(this.tapUp, this);
-    this.lockScreen = bind(this.lockScreen, this);
     this.onTouchStart = bind(this.onTouchStart, this);
     this.onOrientationChange = bind(this.onOrientationChange, this);
     this.repositionWidget = bind(this.repositionWidget, this);
@@ -149,7 +148,9 @@ Picker = Ribcage.extend({
 * either the scroll or dismissal handlers
 */
 , onTouchStart: function (e) {
-    this.lockScreen(e);
+    // Stop the screen from moving!
+    e.preventDefault();
+    e.stopPropagation();
 
     if (e.srcElement.className == 'sw-cancel' || e.srcElement.className == 'sw-done') {
       this.tapDown(e);
@@ -158,15 +159,15 @@ Picker = Ribcage.extend({
     }
   }
 
+/**
+* On an orientation change, the window should be scrolled back to the top,
+* the widget should be aligned at the bottom of the screen,
+* and the column widths needs to be recalculated
+*/
 , onOrientationChange: function (e) {
     window.scrollTo(0, 0);
     this.repositionWidget();
     this.calculateSlotsWidth();
-  }
-
-, lockScreen: function (e) {
-    e.preventDefault();
-    e.stopPropagation();
   }
 
 , calculateSlotsWidth: function () {

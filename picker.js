@@ -189,11 +189,11 @@ Picker = Ribcage.extend({
 /**
 * Iterate through each slot and get the height of each one
 */
-, calculateSlotMaxScrolls: function () {
+, calculatemaxOffsets: function () {
 	  var wrapHeight = this.$('.sw-slots-wrapper').height();
 
 		each(this.slots, function (slot) {
-      slot.slotMaxScroll = wrapHeight - slot.el.clientHeight - 86;
+      slot.maxOffset = wrapHeight - slot.el.clientHeight - 86;
 		})
 	}
 
@@ -240,7 +240,7 @@ Picker = Ribcage.extend({
     * widths and heights of the slots.
     */
     this.calculateSlotsWidth();
-    this.calculateSlotMaxScrolls();
+    this.calculatemaxOffsets();
 
     /**
     * This widget should be "closed" by default, but we can only safely do this after
@@ -267,8 +267,8 @@ Picker = Ribcage.extend({
 
       if (slot.currentOffset > 0) {
         this.setPosition(i, 0);
-      } else if (slot.currentOffset < slot.slotMaxScroll) {
-        this.setPosition(i, slot.slotMaxScroll);
+      } else if (slot.currentOffset < slot.maxOffset) {
+        this.setPosition(i, slot.maxOffset);
       }
 
       index = -Math.round(slot.currentOffset / this.cellHeight);
@@ -349,7 +349,7 @@ Picker = Ribcage.extend({
 
     var topDelta = e.targetTouches[0].clientY - this.startY;
 
-    if (this.slots[this.activeSlot].currentOffset > 0 || this.slots[this.activeSlot].currentOffset < this.slots[this.activeSlot].slotMaxScroll) {
+    if (this.slots[this.activeSlot].currentOffset > 0 || this.slots[this.activeSlot].currentOffset < this.slots[this.activeSlot].maxOffset) {
       topDelta /= 2;
     }
 
@@ -375,8 +375,8 @@ Picker = Ribcage.extend({
     swFrame.removeEventListener('touchend', this.scrollEnd);
 
     // If we are outside of the boundaries, let's go back to the sheepfold
-    if (this.slots[this.activeSlot].currentOffset > 0 || this.slots[this.activeSlot].currentOffset < this.slots[this.activeSlot].slotMaxScroll) {
-      this.scrollTo(this.activeSlot, this.slots[this.activeSlot].currentOffset > 0 ? 0 : this.slots[this.activeSlot].slotMaxScroll);
+    if (this.slots[this.activeSlot].currentOffset > 0 || this.slots[this.activeSlot].currentOffset < this.slots[this.activeSlot].maxOffset) {
+      this.scrollTo(this.activeSlot, this.slots[this.activeSlot].currentOffset > 0 ? 0 : this.slots[this.activeSlot].maxOffset);
       return false;
     }
 
@@ -410,13 +410,13 @@ Picker = Ribcage.extend({
       if (newPosition > swSlotWrapper.height() / 4) {
         newPosition = swSlotWrapper.height() / 4;
       }
-    } else if (newPosition < this.slots[this.activeSlot].slotMaxScroll) {
+    } else if (newPosition < this.slots[this.activeSlot].maxOffset) {
       // Prevent the slot to be dragged outside the visible area (bottom margin)
-      newPosition = (newPosition - this.slots[this.activeSlot].slotMaxScroll) / 2 + this.slots[this.activeSlot].slotMaxScroll;
+      newPosition = (newPosition - this.slots[this.activeSlot].maxOffset) / 2 + this.slots[this.activeSlot].maxOffset;
       newDuration /= 3;
 
-      if (newPosition < this.slots[this.activeSlot].slotMaxScroll - swSlotWrapper.height() / 4) {
-        newPosition = this.slots[this.activeSlot].slotMaxScroll - swSlotWrapper.height() / 4;
+      if (newPosition < this.slots[this.activeSlot].maxOffset - swSlotWrapper.height() / 4) {
+        newPosition = this.slots[this.activeSlot].maxOffset - swSlotWrapper.height() / 4;
       }
     } else {
       newPosition = Math.round(newPosition / this.cellHeight) * this.cellHeight;
@@ -437,7 +437,7 @@ Picker = Ribcage.extend({
     this.setPosition(slotNum, dest ? dest : 0);
 
     // If we are outside of the boundaries go back to the sheepfold
-    if (this.slots[slotNum].currentOffset > 0 || this.slots[slotNum].currentOffset < this.slots[slotNum].slotMaxScroll) {
+    if (this.slots[slotNum].currentOffset > 0 || this.slots[slotNum].currentOffset < this.slots[slotNum].maxOffset) {
       this.slots[slotNum].el.addEventListener('webkitTransitionEnd', this.slots[slotNum].backWithinBoundaries, false);
     }
   }
@@ -473,7 +473,7 @@ Picker = Ribcage.extend({
       slot.el.removeEventListener('webkitTransitionEnd', slot.backWithinBoundaries, false);
     }
 
-    this.scrollTo(key, slot.currentOffset > 0 ? 0 : slot.slotMaxScroll, '150ms');
+    this.scrollTo(key, slot.currentOffset > 0 ? 0 : slot.maxOffset, '150ms');
     return false;
   }
 

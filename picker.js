@@ -31,7 +31,8 @@ Picker = Ribcage.extend({
 *     @param {object} opts.defaultValue - The key of the default value this slot should have
 */
 , afterInit: function (opts) {
-		var self = this;
+		var self = this
+      , i = 0;
 
     // Clone the user's input because we're going to augment it
 		this.slots = clone(opts.slots);
@@ -42,6 +43,17 @@ Picker = Ribcage.extend({
       * We bind it with these values to make backWithinBoundaries faster and simpler.
       */
       slot.backWithinBoundaries = bind(self.backWithinBoundaries, self, slot, key);
+
+      /**
+      * Save the index to the slot, start the offset at 0.
+      * Width will be overwritten in afterRender, once we actually
+      * can figure out how wide the slot is
+      */
+      slot.index = i;
+      slot.currentOffset = 0;
+      slot.width = 0;
+
+      ++i;
     });
 
     /**
@@ -170,6 +182,9 @@ Picker = Ribcage.extend({
     this.calculateSlotsWidth();
   }
 
+/**
+* Iterate through each slot and get the width of each one
+*/
 , calculateSlotsWidth: function () {
     var div = this.$('.sw-slots').children('div')
       , i = 0;
@@ -180,6 +195,9 @@ Picker = Ribcage.extend({
     });
   }
 
+/**
+* Iterate through each slot and get the height of each one
+*/
 , calculateSlotMaxScrolls: function () {
 	  var wrapHeight = this.$('.sw-slots-wrapper').height();
 
@@ -188,6 +206,9 @@ Picker = Ribcage.extend({
 		})
 	}
 
+/**
+* Pass the slot object to the template so it can construct the lists
+*/
 , context: function () {
     return {
       slots: this.slots
@@ -195,31 +216,32 @@ Picker = Ribcage.extend({
   }
 
 , afterRender: function () {
-    var i = 0;
-
     this.activeSlot = null;
 
-    // Create HTML slot elements
     for (var  k in this.slots) {
+      /**
+      * Save the jquery wrapped element to the slot
+      * for convenience
+      */
       var $ul = this.$('ul.picker-slot-' + k)
         , ul = $ul[0];
 
-      this.slots[k].index = i;
-      this.slots[k].currentOffset = 0;
-      this.slots[k].width = 0;
       this.slots[k].$el = $ul;
       this.slots[k].el = ul;
 
-      ul.style.webkitTransitionTimingFunction = 'cubic-bezier(0, 0, 0.2, 1)';   // Add default transition
+      // Add the default transition
+      ul.style.webkitTransitionTimingFunction = 'cubic-bezier(0, 0, 0.2, 1)';
 
-      // Place the slot to its default position (if other than 0)
+      // Align the slot at its default key
       if (this.slots[k].defaultValue) {
         this.scrollToValue(k, this.slots[k].defaultValue);
       }
-
-      ++i;
     }
 
+    /**
+    * At this point the widget *should* be on the DOM, so we can calculate the
+    * widths of the slots.
+    */
     this.calculateSlotsWidth();
 
     /**
@@ -229,12 +251,9 @@ Picker = Ribcage.extend({
     this.repositionWidget();
   }
 
-  /**
-   *
-   * Generic methods
-   *
-   */
-
+/**
+ * TODO: ACTUALLY GET SELECTED VALUES!
+ */
 , getSelectedValues: function () {
     var count
       , index
@@ -272,11 +291,11 @@ Picker = Ribcage.extend({
   }
 
 
-  /**
-   *
-   * Rolling slots
-   *
-   */
+/**
+ *
+ * Rolling slots
+ *
+ */
 
 , setPosition: function (slot, pos) {
     this.slots[slot].currentOffset = pos;

@@ -15,27 +15,45 @@ var Ribcage = require('ribcage-view')
 	, each = require('lodash.foreach')
   , map = require('lodash.map')
   , bind = require('lodash.bind')
+  , clone = require('lodash.clone')
 	, Picker;
 
 Picker = Ribcage.extend({
 	cellHeight: 44
 , friction: 0.003
-, slotData: []
+, isOpen: false
 
-, events: {
-    'touchstart .sw-frame': 'scrollStart'
-  }
-
+/**
+* @param {object} opts - Picker options
+*   @param {object} opts.slots - The slots this picker should have
+*     @param {object} opts.values - A map of the values this slot should have
+*     @param {object} opts.style - The CSS style of this slot
+*     @param {object} opts.defaultValue - The key of the default value this slot should have
+*/
 , afterInit: function (opts) {
 		var self = this;
 
-		this.slots = opts.slots;
+    // Clone the user's input because we're going to augment it
+		this.slots = clone(opts.slots);
 
     each(this.slots, function (slot, key) {
+      /**
+      * This function is called when a slot stops scrolling outside its valid boundaries
+      * we bind it with these values for simplicty's sake.
+      */
       slot.backWithinBoundaries = bind(self.backWithinBoundaries, self, slot, key);
     });
 
-		this.onTouchMove = bind(this.onTouchMove, this);
+    /**
+    * We've got to bind these too, since they'll be called in the global context
+    */
+    this.tapCancel = bind(this.tapCancel, this);
+    this.tapUp = bind(this.tapUp, this);
+    this.lockScreen = bind(this.lockScreen, this);
+    this.onTouchStart = bind(this.onTouchStart, this);
+    this.onTouchMove = bind(this.onTouchMove, this);
+    this.onOrientationChange = bind(this.onOrientationChange, this);
+    this.repositionWidget = bind(this.repositionWidget, this);
 		this.scrollStart = bind(this.scrollStart, this);
 		this.scrollMove = bind(this.scrollMove, this);
 		this.scrollEnd = bind(this.scrollEnd, this);
@@ -43,23 +61,103 @@ Picker = Ribcage.extend({
 	}
 
 /**
-* TODO: Pull these out of the events hash?
+* The entire widget's markup is created with this template
 */
-
 , template: require('./picker.hbs')
 
 /**
-* Global Events
+* Shows the picker by sliding it in from the bottom
 */
+, show: function () {
+    var swWrapper = this.$('.sw-wrapper');
 
-, bindGlobalEvents: function () {
-    // Global events
-    if(!this.eventsAreBound) {
-    	this.eventsAreBound = true;
-	    window.addEventListener('orientationchange', this.onOrientationChange, true);   // Optimize SW on orientation change
-	    window.addEventListener('scroll', this.onScroll, true);        // Reposition SW on page scroll
+    /**
+    * This stops the picker from "sliding around"
+    * after an orientation change or scroll event.
+    * It'll just snap to the correct location.
+    */
+    swWrapper.one('webkitTransitionEnd', function () {
+      swWrapper.css({
+        webkitTransitionDuration: '0ms'
+      });
+    });
+
+    /**
+    * Opens up the wrapper with a transform
+    */
+    swWrapper.css({
+      webkitTransitionTimingFunction: 'ease-out'
+    , webkitTransitionDuration: '400ms'
+    , webkitTransform:'translate3d(0, -260px, 0)'
+    });
+
+    /**
+    * Disables all scrolling outside of the wrapper until it is dismissed
+    * and uses our scrolling logic when touches happen inside the picker
+    */
+    document.addEventListener('touchstart', this.onTouchStart, false);
+
+    /**
+    * Global events are kinda nasty, but we need to reposition the widget
+    * when the orientation changes, or when the page scrolls because of some other event.
+    */
+    window.addEventListener('orientationchange', this.onOrientationChange, true);
+    window.addEventListener('scroll', this.repositionWidget, true);
+  }
+
+/**
+* Hides the picker by sliding it down and out
+*/
+, hide: function () {
+    var swWrapper = this.$('.sw-wrapper');
+
+    /**
+    * Removes any residual transition
+    */
+    swWrapper.one('webkitTransitionEnd', function () {
+      swWrapper.css({
+        webkitTransitionDuration: '0ms'
+      });
+    });
+
+    /**
+    * Closes the wrapper with a transform
+    */
+    swWrapper.css({
+      webkitTransitionTimingFunction: 'ease-in'
+    , webkitTransitionDuration: '400ms'
+    , webkitTransform:'translate3d(0, 0, 0)'
+    });
+
+    /**
+    * Enable all scrolling and tapping again
+    */
+    document.removeEventListener('touchstart', this.onTouchStart, false);
+    window.removeEventListener('orientationchange', this.onOrientationChange, true);
+    window.removeEventListener('scroll', this.repositionWidget, true);
+  }
+
+/**
+* Positions top of the picker, before any transforms are applied,
+* at the bottom of the screen.
+*/
+, repositionWidget: function (e) {
+    this.$('.sw-wrapper').css('top', window.innerHeight + window.pageYOffset + 'px');
+  }
+
+/**
+* Delegates the handling of a touch gesture to
+* either the scroll or dismissal handlers
+*/
+, onTouchStart: function (e) {
+    this.lockScreen(e);
+
+    if (e.srcElement.className == 'sw-cancel' || e.srcElement.className == 'sw-done') {
+      this.tapDown(e);
+    } else if (e.srcElement.className == 'sw-frame') {
+      this.scrollStart(e);
     }
-	}
+  }
 
 , onTouchMove: function (e) {
 	  this.lockScreen(e);
@@ -73,12 +171,8 @@ Picker = Ribcage.extend({
 
 , onOrientationChange: function (e) {
     window.scrollTo(0, 0);
-    this.$('.sw-wrapper').css('top', window.innerHeight + window.pageYOffset + 'px');
+    this.repositionWidget();
     this.calculateSlotsWidth();
-  }
-
-, onScroll: function (e) {
-    this.$('.sw-wrapper').css('top', window.innerHeight + window.pageYOffset + 'px');
   }
 
 , lockScreen: function (e) {
@@ -91,7 +185,7 @@ Picker = Ribcage.extend({
       , i = 0;
 
     each(this.slots, function (slot) {
-      slot.slotWidth = div[i].offsetWidth;
+      slot.width = div[i].offsetWidth;
       i++;
     });
   }
@@ -120,9 +214,9 @@ Picker = Ribcage.extend({
       var $ul = this.$('ul.picker-slot-' + k)
         , ul = $ul[0];
 
-      this.slots[k].slotPosition = i;      // Save the slot position inside the wrapper
-      this.slots[k].slotYPosition = 0;
-      this.slots[k].slotWidth = 0;
+      this.slots[k].index = i;
+      this.slots[k].currentOffset = 0;
+      this.slots[k].width = 0;
       this.slots[k].$el = $ul;
       this.slots[k].el = ul;
 
@@ -138,7 +232,11 @@ Picker = Ribcage.extend({
 
     this.calculateSlotsWidth();
 
-    this.bindGlobalEvents();
+    /**
+    * This widget should be "closed" by default, but we can only safely do this after
+    * the widget has been added to the DOM
+    */
+    this.repositionWidget();
   }
 
   /**
@@ -160,13 +258,13 @@ Picker = Ribcage.extend({
       slot.el.removeEventListener('webkitTransitionEnd', slot.backWithinBoundaries, false);
       slot.el.style.webkitTransitionDuration = '0';
 
-      if (slot.slotYPosition > 0) {
+      if (slot.currentOffset > 0) {
         this.setPosition(i, 0);
-      } else if (slot.slotYPosition < slot.slotMaxScroll) {
+      } else if (slot.currentOffset < slot.slotMaxScroll) {
         this.setPosition(i, slot.slotMaxScroll);
       }
 
-      index = -Math.round(slot.slotYPosition / this.cellHeight);
+      index = -Math.round(slot.currentOffset / this.cellHeight);
 
       count = 0;
       for (var i in this.slots[i].values) {
@@ -191,14 +289,12 @@ Picker = Ribcage.extend({
    */
 
 , setPosition: function (slot, pos) {
-    this.slots[slot].slotYPosition = pos;
+    this.slots[slot].currentOffset = pos;
     this.slots[slot].el.style.webkitTransform = 'translate3d(0, ' + pos + 'px, 0)';
   }
 
 , scrollStart: function (e) {
-    e = e.originalEvent;
-
-    this.lockScreen(e);
+    var swFrame = this.$('.sw-frame')[0];
 
     this.calculateSlotMaxScrolls();
 
@@ -208,19 +304,12 @@ Picker = Ribcage.extend({
     // Find tapped slot
     var slot = 0;
     for (var k in this.slots) {
-      slot += this.slots[k].slotWidth;
+      slot += this.slots[k].width;
 
       if (xPos < slot) {
         this.activeSlot = k;
         break;
       }
-    }
-
-    // If slot is readonly do nothing
-    if (this.slots[this.activeSlot].readonly) {
-	    this.$('.sw-frame').off('touchmove', this.scrollMove);
-	    this.$('.sw-frame').off('touchend', this.scrollEnd);
-      return false;
     }
 
     var slotObj = this.slots[this.activeSlot];
@@ -230,60 +319,58 @@ Picker = Ribcage.extend({
     // Stop and hold slot position
     var theTransform = window.getComputedStyle(this.slots[this.activeSlot].el).webkitTransform;
     theTransform = new WebKitCSSMatrix(theTransform).m42;
-    if (theTransform != this.slots[this.activeSlot].slotYPosition) {
+    if (theTransform != this.slots[this.activeSlot].currentOffset) {
       this.setPosition(this.activeSlot, theTransform);
     }
 
     this.startY = e.targetTouches[0].clientY;
-    this.scrollStartY = this.slots[this.activeSlot].slotYPosition;
+    this.scrollStartY = this.slots[this.activeSlot].currentOffset;
     this.scrollStartTime = e.timeStamp;
 
-    this.$('.sw-frame').on('touchmove', this.scrollMove);
-    this.$('.sw-frame').on('touchend', this.scrollEnd);
+    swFrame.addEventListener('touchmove', this.scrollMove, false);
+    swFrame.addEventListener('touchend', this.scrollEnd, false);
 
     return true;
   }
 
 , scrollMove: function (e) {
-		e = e.originalEvent;
 
     var topDelta = e.targetTouches[0].clientY - this.startY;
 
-    if (this.slots[this.activeSlot].slotYPosition > 0 || this.slots[this.activeSlot].slotYPosition < this.slots[this.activeSlot].slotMaxScroll) {
+    if (this.slots[this.activeSlot].currentOffset > 0 || this.slots[this.activeSlot].currentOffset < this.slots[this.activeSlot].slotMaxScroll) {
       topDelta /= 2;
     }
 
-    this.setPosition(this.activeSlot, this.slots[this.activeSlot].slotYPosition + topDelta);
+    this.setPosition(this.activeSlot, this.slots[this.activeSlot].currentOffset + topDelta);
     this.startY = e.targetTouches[0].clientY;
 
     // Prevent slingshot effect
     if (e.timeStamp - this.scrollStartTime > 80) {
-      this.scrollStartY = this.slots[this.activeSlot].slotYPosition;
+      this.scrollStartY = this.slots[this.activeSlot].currentOffset;
       this.scrollStartTime = e.timeStamp;
     }
   }
 
 , scrollEnd: function (e) {
-		var swSlotWrapper = this.$('.sw-wrapper');
+		var swSlotWrapper = this.$('.sw-wrapper')
+      , swFrame = $('.sw-frame')[0];
 
-		e = e.originalEvent;
-
-    this.$('.sw-frame').off('touchmove', this.scrollMove);
-    this.$('.sw-frame').off('touchend', this.scrollEnd);
+    swFrame.removeEventListener('touchmove', this.scrollMove);
+    swFrame.removeEventListener('touchend', this.scrollEnd);
 
     // If we are outside of the boundaries, let's go back to the sheepfold
-    if (this.slots[this.activeSlot].slotYPosition > 0 || this.slots[this.activeSlot].slotYPosition < this.slots[this.activeSlot].slotMaxScroll) {
-      this.scrollTo(this.activeSlot, this.slots[this.activeSlot].slotYPosition > 0 ? 0 : this.slots[this.activeSlot].slotMaxScroll);
+    if (this.slots[this.activeSlot].currentOffset > 0 || this.slots[this.activeSlot].currentOffset < this.slots[this.activeSlot].slotMaxScroll) {
+      this.scrollTo(this.activeSlot, this.slots[this.activeSlot].currentOffset > 0 ? 0 : this.slots[this.activeSlot].slotMaxScroll);
       return false;
     }
 
     // Lame formula to calculate a fake deceleration
-    var scrollDistance = this.slots[this.activeSlot].slotYPosition - this.scrollStartY;
+    var scrollDistance = this.slots[this.activeSlot].currentOffset - this.scrollStartY;
 
     // The drag session was too short
     if (scrollDistance < this.cellHeight / 1.5 && scrollDistance > -this.cellHeight / 1.5) {
-      if (this.slots[this.activeSlot].slotYPosition % this.cellHeight) {
-        this.scrollTo(this.activeSlot, Math.round(this.slots[this.activeSlot].slotYPosition / this.cellHeight) * this.cellHeight, '100ms');
+      if (this.slots[this.activeSlot].currentOffset % this.cellHeight) {
+        this.scrollTo(this.activeSlot, Math.round(this.slots[this.activeSlot].currentOffset / this.cellHeight) * this.cellHeight, '100ms');
       }
 
       return false;
@@ -299,7 +386,7 @@ Picker = Ribcage.extend({
       newScrollDistance = -newScrollDistance;
     }
 
-    var newPosition = this.slots[this.activeSlot].slotYPosition + newScrollDistance;
+    var newPosition = this.slots[this.activeSlot].currentOffset + newScrollDistance;
 
     if (newPosition > 0) {
       // Prevent the slot to be dragged outside the visible area (top margin)
@@ -331,7 +418,7 @@ Picker = Ribcage.extend({
     this.setPosition(slotNum, dest ? dest : 0);
 
     // If we are outside of the boundaries go back to the sheepfold
-    if (this.slots[slotNum].slotYPosition > 0 || this.slots[slotNum].slotYPosition < this.slots[slotNum].slotMaxScroll) {
+    if (this.slots[slotNum].currentOffset > 0 || this.slots[slotNum].currentOffset < this.slots[slotNum].slotMaxScroll) {
       this.slots[slotNum].el.addEventListener('webkitTransitionEnd', this.slots[slotNum].backWithinBoundaries, false);
     }
   }
@@ -359,9 +446,9 @@ Picker = Ribcage.extend({
       slot.el.removeEventListener('webkitTransitionEnd', slot.backWithinBoundaries, false);
     }
 
-    this.scrollTo(key, slot.slotYPosition > 0 ? 0 : slot.slotMaxScroll, '150ms');
+    this.scrollTo(key, slot.currentOffset > 0 ? 0 : slot.slotMaxScroll, '150ms');
     return false;
-  },
+  }
 
 
   /**
@@ -370,25 +457,25 @@ Picker = Ribcage.extend({
    *
    */
 
-  tapDown: function (e) {
-    e.currentTarget.addEventListener('touchmove', this, false);
-    e.currentTarget.addEventListener('touchend', this, false);
-    e.currentTarget.className = 'sw-pressed';
+, tapDown: function (e) {
+    e.srcElement.addEventListener('touchmove', this.tapCancel, false);
+    e.srcElement.addEventListener('touchend', this.tapUp, false);
   }
 
 , tapCancel: function (e) {
-    e.currentTarget.removeEventListener('touchmove', this, false);
-    e.currentTarget.removeEventListener('touchend', this, false);
-    e.currentTarget.className = '';
+    e.srcElement.removeEventListener('touchmove', this.tapCancel, false);
+    e.srcElement.removeEventListener('touchend', this.tapUp, false);
   }
 
 , tapUp: function (e) {
     this.tapCancel(e);
 
-    if ($(e.currentTarget).hasClass('sw-cancel')) {
-      this.cancelAction();
+    if (e.srcElement.className == 'sw-cancel') {
+      if(this.cancelAction)
+        this.cancelAction();
     } else {
-      this.doneAction();
+      if(this.doneAction)
+        this.doneAction();
     }
 
     this.hide();

@@ -1,5 +1,6 @@
 .sw-wrapper {
-	position:absolute; z-index:1000;
+	position:absolute;
+	z-index:1000;
 	left:0;
 	width:100%;
 	font-family:helvetica, sans-serif;

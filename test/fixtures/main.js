@@ -1,4 +1,4 @@
-var picker = require('../../picker')
+var Picker = require('../../picker')
   , Ribcage = require('ribcage-view')
   , Backbone = require('backbone')
   , $ = require('jquery-browserify')
@@ -20,7 +20,7 @@ AppView = Ribcage.extend({
       quants[i] = i;
     }
 
-    spinner = new picker({
+    spinner = new Picker({
       slots: {
         quantity: {
           values: quants

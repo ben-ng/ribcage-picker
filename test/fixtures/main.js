@@ -25,6 +25,7 @@ AppView = Ribcage.extend({
         quantity: {
           values: quants
         , style: 'right'
+        , defaultValue: 50
         }
       , unit: {
           values: {
@@ -33,6 +34,7 @@ AppView = Ribcage.extend({
           , 3: 'oz'
           }
         , style: 'right'
+        , defaultValue: 2
         }
       }
     });

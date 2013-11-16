@@ -206,6 +206,12 @@ Picker = Ribcage.extend({
     };
   }
 
+/**
+* The afterRender function does the things we can't do in afterInit
+* namely, getting references to the newly created DOM elements,
+* setting the default transition on the slots, and scrolling them to
+* their default values.
+*/
 , afterRender: function () {
     this.activeSlot = null;
 
@@ -224,16 +230,17 @@ Picker = Ribcage.extend({
       ul.style.webkitTransitionTimingFunction = 'cubic-bezier(0, 0, 0.2, 1)';
 
       // Align the slot at its default key
-      if (this.slots[k].defaultValue) {
+      if (this.slots[k].defaultValue != null) {
         this.scrollToValue(k, this.slots[k].defaultValue);
       }
     }
 
     /**
     * At this point the widget *should* be on the DOM, so we can calculate the
-    * widths of the slots.
+    * widths and heights of the slots.
     */
     this.calculateSlotsWidth();
+    this.calculateSlotMaxScrolls();
 
     /**
     * This widget should be "closed" by default, but we can only safely do this after
@@ -294,15 +301,18 @@ Picker = Ribcage.extend({
   }
 
 , scrollStart: function (e) {
-    var swFrame = this.$('.sw-frame')[0];
+    var swFrame = this.$('.sw-frame')[0]
+      , xPos
+      , slot;
 
-    this.calculateSlotMaxScrolls();
+    /**
+    * Find the clicked slot
+    * Clicked position minus left offset (should be 11px)
+    */
+    xPos = e.targetTouches[0].clientX - this.$('.sw-slots').offset().left;
 
-    // Find the clicked slot
-    var xPos = e.targetTouches[0].clientX - this.$('.sw-slots').offset().left;  // Clicked position minus left offset (should be 11px)
+    slot = 0;
 
-    // Find tapped slot
-    var slot = 0;
     for (var k in this.slots) {
       slot += this.slots[k].width;
 
@@ -313,8 +323,10 @@ Picker = Ribcage.extend({
     }
 
     var slotObj = this.slots[this.activeSlot];
-    slotObj.el.removeEventListener('webkitTransitionEnd', slotObj.backWithinBoundaries, false); // Remove transition event (if any)
-    slotObj.el.style.webkitTransitionDuration = '0';    // Remove any residual transition
+    // Remove transition event (if any)
+    slotObj.el.removeEventListener('webkitTransitionEnd', slotObj.backWithinBoundaries, false);
+    // Remove any residual transition
+    slotObj.el.style.webkitTransitionDuration = '0';
 
     // Stop and hold slot position
     var theTransform = window.getComputedStyle(this.slots[this.activeSlot].el).webkitTransform;

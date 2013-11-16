@@ -353,7 +353,11 @@ Picker = Ribcage.extend({
 
 , scrollEnd: function (e) {
 		var swSlotWrapper = this.$('.sw-wrapper')
-      , swFrame = $('.sw-frame')[0];
+      , swFrame = $('.sw-frame')[0]
+      , scrollDuration = e.timeStamp - this.scrollStartTime
+      , newDuration
+      , newScrollDistance
+      , newPosition;
 
     swFrame.removeEventListener('touchmove', this.scrollMove);
     swFrame.removeEventListener('touchend', this.scrollEnd);
@@ -376,17 +380,15 @@ Picker = Ribcage.extend({
       return false;
     }
 
-    var scrollDuration = e.timeStamp - this.scrollStartTime;
-
-    var newDuration = (2 * scrollDistance / scrollDuration) / this.friction;
-    var newScrollDistance = (this.friction / 2) * (newDuration * newDuration);
+    newDuration = (2 * scrollDistance / scrollDuration) / this.friction;
+    newScrollDistance = (this.friction / 2) * (newDuration * newDuration);
 
     if (newDuration < 0) {
       newDuration = -newDuration;
       newScrollDistance = -newScrollDistance;
     }
 
-    var newPosition = this.slots[this.activeSlot].currentOffset + newScrollDistance;
+    newPosition = this.slots[this.activeSlot].currentOffset + newScrollDistance;
 
     if (newPosition > 0) {
       // Prevent the slot to be dragged outside the visible area (top margin)
@@ -413,6 +415,11 @@ Picker = Ribcage.extend({
     return true;
   }
 
+/**
+* Scrolls the slot to a specified offset, and attaches a handler
+* that will bounce it back to the valid range if the destination
+* is out of bounds.
+*/
 , scrollTo: function (slotNum, dest, runtime) {
     this.slots[slotNum].el.style.webkitTransitionDuration = runtime ? runtime : '100ms';
     this.setPosition(slotNum, dest ? dest : 0);
@@ -423,6 +430,9 @@ Picker = Ribcage.extend({
     }
   }
 
+/**
+* Given a key, scrolls the slot to that cell
+*/
 , scrollToValue: function (slot, value) {
     var yPos, count, i;
 
@@ -441,6 +451,11 @@ Picker = Ribcage.extend({
     }
   }
 
+/**
+* This event handler is called when a scroll animation has ended, but
+* we knew that the scroll was going out of bounds. This function
+* ensures that the slot scrolls back within the valid bounds
+*/
 , backWithinBoundaries: function (slot, key) {
     if(slot) {
       slot.el.removeEventListener('webkitTransitionEnd', slot.backWithinBoundaries, false);
@@ -450,26 +465,36 @@ Picker = Ribcage.extend({
     return false;
   }
 
-
-  /**
-   *
-   * Buttons
-   *
-   */
-
+/**
+ * Called when a touch starts on either the cancel or done buttons
+ */
 , tapDown: function (e) {
+    /**
+    * Bind the move and end events once a touch starts
+    */
     e.srcElement.addEventListener('touchmove', this.tapCancel, false);
     e.srcElement.addEventListener('touchend', this.tapUp, false);
   }
 
+/**
+* If a finger moves while its on a button, we should interpret that
+* as a "cancelled" touch, and remove the event listners
+*/
 , tapCancel: function (e) {
     e.srcElement.removeEventListener('touchmove', this.tapCancel, false);
     e.srcElement.removeEventListener('touchend', this.tapUp, false);
   }
 
+/**
+* If this event handler is called, it means that a finger touched and
+* lifted off a button without moving. This should be interpreted as
+* a button push.
+*/
 , tapUp: function (e) {
+    // Remove the event listeners from the button
     this.tapCancel(e);
 
+    // Fire off the correct callback
     if (e.srcElement.className == 'sw-cancel') {
       if(this.cancelAction)
         this.cancelAction();
@@ -478,6 +503,7 @@ Picker = Ribcage.extend({
         this.doneAction();
     }
 
+    // Slide the picker widget out of view
     this.hide();
   }
 
@@ -487,14 +513,6 @@ Picker = Ribcage.extend({
 
 , setDoneAction: function (action) {
     this.doneAction = action;
-  }
-
-, cancelAction: function () {
-    return false;
-  }
-
-, cancelDone: function () {
-    return true;
   }
 });
 

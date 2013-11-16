@@ -51,7 +51,6 @@ Picker = Ribcage.extend({
     this.tapUp = bind(this.tapUp, this);
     this.lockScreen = bind(this.lockScreen, this);
     this.onTouchStart = bind(this.onTouchStart, this);
-    this.onTouchMove = bind(this.onTouchMove, this);
     this.onOrientationChange = bind(this.onOrientationChange, this);
     this.repositionWidget = bind(this.repositionWidget, this);
 		this.scrollStart = bind(this.scrollStart, this);
@@ -138,15 +137,15 @@ Picker = Ribcage.extend({
   }
 
 /**
-* Positions top of the picker, before any transforms are applied,
-* at the bottom of the screen.
+* Positions the top of the picker at the bottom of the screen.
+* (This is before any transforms are applied)
 */
 , repositionWidget: function (e) {
     this.$('.sw-wrapper').css('top', window.innerHeight + window.pageYOffset + 'px');
   }
 
 /**
-* Delegates the handling of a touch gesture to
+* Delegates the handling of touch gestures to
 * either the scroll or dismissal handlers
 */
 , onTouchStart: function (e) {
@@ -158,16 +157,6 @@ Picker = Ribcage.extend({
       this.scrollStart(e);
     }
   }
-
-, onTouchMove: function (e) {
-	  this.lockScreen(e);
-
-	  if (e.srcElement.className == 'sw-cancel' || e.srcElement.className == 'sw-done') {
-	    this.tapCancel(e);
-	  } else if (e.srcElement.className == 'sw-frame') {
-	    this.scrollMove(e);
-	  }
-	}
 
 , onOrientationChange: function (e) {
     window.scrollTo(0, 0);

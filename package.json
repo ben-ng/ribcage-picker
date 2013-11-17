@@ -1,5 +1,5 @@
 {
-  "name": "ribcage-switcher",
+  "name": "ribcage-picker",
   "version": "0.0.1",
   "description": "A iOS-inspired UIPickerView for ribcage-ui",
   "main": "picker.js",

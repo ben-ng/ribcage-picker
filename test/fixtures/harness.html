@@ -4,72 +4,12 @@
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
   <meta name="viewport" id="iphone-viewport" content="minimum-scale=1.0, maximum-scale=1.0, width=device-width" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <link rel="stylesheet" href="./styles.css" />
-  <style type="text/css">
-    html,
-    body {
-      margin: 0;
-      width: 100%;
-    }
-
-    #app {
-      position: absolute;
-      top:0;
-      bottom:0;
-      left:0;
-      right:0;
-      overflow: hidden;
-    }
-
-    .holder {
-      padding: 10px;
-    }
-
-    a.pick {
-      /* Shamelessly stolen from purecss.io */
-
-      /* Structure */
-      display: inline-block;
-      *display: inline; /*IE 6/7*/
-      zoom: 1;
-      line-height: normal;
-      white-space: nowrap;
-      vertical-align: baseline;
-      text-align: center;
-      cursor: pointer;
-      -webkit-user-drag: none;
-      -webkit-user-select: none;
-      -moz-user-select: none;
-      -ms-user-select: none;
-      user-select: none;
-
-      font-family: inherit;
-      font-size: 100%;
-      *font-size: 90%; /*IE 6/7 - To reduce IE's oversized button text*/
-      *overflow: visible; /*IE 6/7 - Because of IE's overly large left/right padding on buttons */
-      padding: 0.5em 1.5em 0.5em;
-      color: #444; /* rgba not supported (IE 8) */
-      color: rgba(0, 0, 0, 0.80); /* rgba supported */
-      *color: #444; /* IE 6 & 7 */
-      border: 1px solid #999;  /*IE 6/7/8*/
-      border: none rgba(0, 0, 0, 0);  /*IE9 + everything else*/
-      background-color: #E6E6E6;
-      text-decoration: none;
-      border-radius: 2px;
-      /* Transitions */
-      -webkit-transition: 0.1s linear -webkit-box-shadow;
-      -moz-transition: 0.1s linear -moz-box-shadow;
-      -ms-transition: 0.1s linear box-shadow;
-      -o-transition: 0.1s linear box-shadow;
-      transition: 0.1s linear box-shadow;
-
-      /* Make it a primary button */
-      background-color: rgb(0, 120, 231);
-      color: #fff;
-    }
-  </style>
+  <link rel="stylesheet" href="./harness.css" />
+  <link rel="stylesheet" href="./picker.css" />
 </head>
 <body>
+  <a href="https://github.com/ben-ng/ribcage-picker"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"></a>
+
   <div id="app"></div>
   <script src="./bundle.js"></script>
 </body>

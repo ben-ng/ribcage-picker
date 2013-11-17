@@ -8,8 +8,10 @@ var browserify = require('browserify')
   , BUILD_DIR = path.join(__dirname, 'test', 'build')
   , BUILD_FILE = path.join(BUILD_DIR, 'bundle.js')
   , ENTRY_SCRIPT = path.join(FIXTURE_DIR, 'main.js')
-  , HARNESS_CSS_IN = path.join(__dirname, 'picker.css')
-  , HARNESS_CSS_OUT = path.join(BUILD_DIR, 'styles.css')
+  , PICKER_CSS_IN = path.join(__dirname, 'picker.css')
+  , PICKER_CSS_OUT = path.join(BUILD_DIR, 'picker.css')
+  , HARNESS_CSS_IN = path.join(FIXTURE_DIR, 'harness.css')
+  , HARNESS_CSS_OUT = path.join(BUILD_DIR, 'harness.css')
   , HARNESS_IMG_IN = path.join(__dirname, 'img')
   , HARNESS_IMG_OUT = path.join(BUILD_DIR, 'img')
   , TEST_HARNESS_IN = path.join(FIXTURE_DIR, 'harness.html')
@@ -33,19 +35,24 @@ task('test', {async: true}, function () {
         fs.createReadStream(TEST_HARNESS_IN)
           .pipe(fs.createWriteStream(TEST_HARNESS_OUT))
           .on('close', function () {
-    // Copy in CSS
+    // Copy in harness CSS
             fs.createReadStream(HARNESS_CSS_IN)
               .pipe(fs.createWriteStream(HARNESS_CSS_OUT))
               .on('close', function () {
+    // Copy in picker CSS
+                fs.createReadStream(PICKER_CSS_IN)
+                  .pipe(fs.createWriteStream(PICKER_CSS_OUT))
+                  .on('close', function () {
     // Copy in images
-                cpr(HARNESS_IMG_IN, HARNESS_IMG_OUT, {
-                  deleteFirst: true
-                , overwrite: true
-                , confirm: true
-                }, function (err) {
-                  assert.ok(err == null);
-                  complete();
-                });
+                    cpr(HARNESS_IMG_IN, HARNESS_IMG_OUT, {
+                      deleteFirst: true
+                    , overwrite: true
+                    , confirm: true
+                    }, function (err) {
+                      assert.ok(err == null);
+                      complete();
+                    });
+                  });
               });
           });
       });

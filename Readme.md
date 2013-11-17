@@ -1,11 +1,16 @@
 ribcage-picker
 ==============
 
-[Try the demo](http://ben-ng.github.io/ribcage-picker/)
-
 This is a widget that mimics the native "slot-machine" style pickers now ubiquitious on our mobile devices.
 
 `ribcage-picker` is a [Backbone](http://backbonejs.org/) view, best served with the other great components in the [ribcage-ui](https://github.com/Techwraith/ribcage-ui) collection.
+
+Demo
+----
+
+![Demo Screenshot](http://ben-ng.github.io/ribcage-picker/screencap.png)
+
+[Try the demo](http://ben-ng.github.io/ribcage-picker/)
 
 Usage
 -----

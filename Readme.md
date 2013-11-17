@@ -8,7 +8,7 @@ This is a widget that mimics the native "slot-machine" style pickers now ubiquit
 Demo
 ----
 
-![Demo Screenshot](http://ben-ng.github.io/ribcage-picker/screencap.png)
+![Demo Screenshot](http://ben-ng.github.io/ribcage-picker/screencap.jpg)
 
 [Try the demo](http://ben-ng.github.io/ribcage-picker/)
 

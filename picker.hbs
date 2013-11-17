@@ -1,12 +1,12 @@
-<div class="sw-wrapper">
-  <div class="sw-header">
-    <div class="sw-cancel">Cancel</div>
-    <div class="sw-done">Done</div>
+<div class="rp-wrapper">
+  <div class="rp-header">
+    <div class="rp-cancel">Cancel</div>
+    <div class="rp-done">Done</div>
   </div>
-  <div class="sw-slots-wrapper">
-    <div class="sw-slots">
+  <div class="rp-slots-wrapper">
+    <div class="rp-slots">
     {{#each slots}}
-      <div class="sw-{{style}}">
+      <div class="rp-{{style}}">
         <ul class="picker-slot-{{@key}}">
           {{#each values}}
             <li>{{this}}</li>
@@ -16,6 +16,6 @@
     {{/each}}
     </div>
   </div>
-  <div class="sw-frame"></div>
+  <div class="rp-frame"></div>
   </div>
 </div>

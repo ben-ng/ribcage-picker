@@ -1,4 +1,4 @@
-.sw-wrapper {
+.rp-wrapper {
 	position:absolute;
 	z-index:1000;
 	left:0;
@@ -8,15 +8,15 @@
 	text-align:left;
 }
 
-.sw-header {
+.rp-header {
 	position:relative;
 	width:100%; height:43px;
 	border-top:1px solid #000; border-bottom:1px solid #000;
-	background:url(./img/sw-header.png) 0 0 repeat-x;
+	background:url(./img/rp-header.png) 0 0 repeat-x;
 	opacity: 0.9;
 }
 
-.sw-cancel, .sw-done {
+.rp-cancel, .rp-done {
 	position:absolute;
 	top:7px;
 	height:20px; line-height:20px;
@@ -27,21 +27,21 @@
 	color:#fff;
 }
 
-.sw-cancel {
+.rp-cancel {
 	left:7px;
 	float:left;
-	-webkit-border-image:url(./img/sw-button-cancel.png) 5;
+	-webkit-border-image:url(./img/rp-button-cancel.png) 5;
 }
 
-.sw-done {
+.rp-done {
 	right:7px;
 	float:right;
-	-webkit-border-image:url(./img/sw-button-done.png) 5;
+	-webkit-border-image:url(./img/rp-button-done.png) 5;
 }
 
-.sw-pressed { opacity:0.4; }
+.rp-pressed { opacity:0.4; }
 
-.sw-slots-wrapper {
+.rp-slots-wrapper {
 	position:relative; z-index:999;
 	display:block;
 	height:215px;
@@ -49,45 +49,45 @@
 	overflow:hidden;
 }
 
-.sw-slots {
+.rp-slots {
 	display:table;
 	width:100%;
 	background:#fcfcfc;
 }
 
-.sw-slots div {
+.rp-slots div {
 	display:table-cell;
 	height:100%;
 	padding-top:86px;
 	border-left:2px solid #0d0e0f;
 	background-color:#fcfcfc;
-	background-image: url(./img/sw-slot-border.png);
+	background-image: url(./img/rp-slot-border.png);
 	background-position: 0 0, 100% 0;
 	background-repeat: repeat-y;
 }
 
-.sw-slots div:first-child { border:0; }
+.rp-slots div:first-child { border:0; }
 
-.sw-slots ul {
+.rp-slots ul {
 	padding:0 0 85px 0; margin:0;
 	list-style:none;
 }
 
-.sw-slots .sw-right { text-align:right; }
-.sw-slots .sw-shrink { width:1%; }
-.sw-slots .sw-readonly { background:#ddd; }
+.rp-slots .rp-right { text-align:right; }
+.rp-slots .rp-shrink { width:1%; }
+.rp-slots .rp-readonly { background:#ddd; }
 
-.sw-slots li {
+.rp-slots li {
 	padding:0 8px;
 	height:44px;
 	overflow:hidden;
 	font:bold 24px/44px Helvetica,sans-serif;
 }
 
-.sw-frame {
+.rp-frame {
 	position:absolute; z-index:1000;
 	left:0; right:0; bottom:0;
 	height:183px;
 	border-width:16px;
-	-webkit-border-image:url(./img/sw-alpha.png) 16;
+	-webkit-border-image:url(./img/rp-alpha.png) 16;
 }

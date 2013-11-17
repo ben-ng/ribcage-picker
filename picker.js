@@ -96,7 +96,7 @@ Picker = Ribcage.extend({
 */
 , show: function () {
     var self = this
-      , swWrapper = this.$('.sw-wrapper');
+      , swWrapper = this.$('.rp-wrapper');
 
     this.isOpen = true;
 
@@ -152,7 +152,7 @@ Picker = Ribcage.extend({
 * Hides the picker by sliding it down and out
 */
 , hide: function () {
-    var swWrapper = this.$('.sw-wrapper');
+    var swWrapper = this.$('.rp-wrapper');
 
     this.isOpen = false;
 
@@ -191,9 +191,9 @@ Picker = Ribcage.extend({
     e.preventDefault();
     e.stopPropagation();
 
-    if (e.srcElement.className == 'sw-cancel' || e.srcElement.className == 'sw-done') {
+    if (e.srcElement.className == 'rp-cancel' || e.srcElement.className == 'rp-done') {
       this.tapDown(e);
-    } else if (e.srcElement.className == 'sw-frame') {
+    } else if (e.srcElement.className == 'rp-frame') {
       this.scrollStart(e);
     }
   }
@@ -202,7 +202,7 @@ Picker = Ribcage.extend({
 * Iterate through each slot and get the width of each one
 */
 , calculateSlotsWidth: function () {
-    var div = this.$('.sw-slots').children('div')
+    var div = this.$('.rp-slots').children('div')
       , i = 0;
 
     each(this.slots, function (slot) {
@@ -215,7 +215,7 @@ Picker = Ribcage.extend({
 * Iterate through each slot and get the height of each one
 */
 , calculateMaxOffsets: function () {
-	  var wrapHeight = this.$('.sw-slots-wrapper').height();
+	  var wrapHeight = this.$('.rp-slots-wrapper').height();
 
 		each(this.slots, function (slot) {
       slot.maxOffset = wrapHeight - slot.el.clientHeight - 86;
@@ -239,7 +239,7 @@ Picker = Ribcage.extend({
 */
 , afterRender: function () {
     var self = this
-      , swWrapper = this.$('.sw-wrapper')
+      , swWrapper = this.$('.rp-wrapper')
       , isReady = swWrapper.height() > 0;
 
     this.activeSlot = null;
@@ -312,7 +312,7 @@ Picker = Ribcage.extend({
   }
 
 , scrollStart: function (e) {
-    var swFrame = this.$('.sw-frame')[0]
+    var swFrame = this.$('.rp-frame')[0]
       , xPos
       , slot;
 
@@ -320,7 +320,7 @@ Picker = Ribcage.extend({
     * Find the clicked slot
     * Clicked position minus left offset (should be 11px)
     */
-    xPos = e.targetTouches[0].clientX - this.$('.sw-slots').offset().left;
+    xPos = e.targetTouches[0].clientX - this.$('.rp-slots').offset().left;
 
     slot = 0;
 
@@ -375,8 +375,8 @@ Picker = Ribcage.extend({
   }
 
 , scrollEnd: function (e) {
-		var swSlotWrapper = this.$('.sw-wrapper')
-      , swFrame = $('.sw-frame')[0]
+		var swSlotWrapper = this.$('.rp-wrapper')
+      , swFrame = $('.rp-frame')[0]
       , scrollDuration = e.timeStamp - this.scrollStartTime
       , newDuration
       , newScrollDistance
@@ -564,7 +564,7 @@ Picker = Ribcage.extend({
 * (This is before any transforms are applied)
 */
 , repositionWidget: function (e) {
-    this.$('.sw-wrapper').css('top', window.innerHeight + window.pageYOffset + 'px');
+    this.$('.rp-wrapper').css('top', window.innerHeight + window.pageYOffset + 'px');
   }
 
 /**
@@ -608,7 +608,7 @@ Picker = Ribcage.extend({
     this.tapCancel(e);
 
     // Fire off the correct callback
-    if (e.srcElement.className == 'sw-cancel') {
+    if (e.srcElement.className == 'rp-cancel') {
       if(this.cancelAction)
         this.cancelAction();
     } else {

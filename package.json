@@ -6,8 +6,8 @@
   "dependencies": {
     "lodash.foreach": "2.3.x",
     "lodash.bind": "2.3.x",
-    "lodash.clone": "2.3.x",
     "lodash.isequal": "2.3.x",
+    "lodash.clone": "2.3.x",
     "hbsfy": "1.0.x"
   },
   "devDependencies": {

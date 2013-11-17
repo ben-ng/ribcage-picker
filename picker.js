@@ -5,8 +5,8 @@
 var Ribcage = require('ribcage-view')
 	, each = require('lodash.foreach')
   , bind = require('lodash.bind')
+  , isEqual = require('lodash.isequal')
   , clone = require('lodash.clone')
-  , isEqual = require('lodash.isEqual')
 	, Picker;
 
 Picker = Ribcage.extend({
@@ -72,11 +72,13 @@ Picker = Ribcage.extend({
     if(!this.slots[slotKey])
       throw new Error('setSlot can only be used to update a slot that already exists');
 
-    slot.values = clone(opts.values);
+    this.slots[slotKey].values = clone(opts.values);
+
+    this.render();
 
     // Try our best to keep the same offset in the slot
-    if(slot.values[this.currentSelection[slotKey]] != null) {
-      this.scrollToValue(slotKey, this.currentSelection[slotKey]);
+    if(this.slots[slotKey].values[this.currentSelection[slotKey].value] != null) {
+      this.scrollToValue(slotKey, this.currentSelection[slotKey].key);
     }
     else {
       // The value doesn't exist.. try to scroll as close as possible
@@ -490,16 +492,26 @@ Picker = Ribcage.extend({
 * Called when a slot stops spinning, used to trigger the `change` event
 */
 , onTransitionEnd: function (slot, key) {
-    var newSelection = this.getValues();
+    var self = this
+      , newSelection = this.getValues()
+      , different = false;
 
-    if(isEqual(newSelection, this.currentSelection)) {
-      return;
-    }
-    else {
-      this.currentSelection = newSelection;
+    each(newSelection, function (slot) {
+      if(! isEqual(newSelection[key], self.currentSelection[key])) {
+        self.currentSelection[key] = newSelection[key];
 
+        self.trigger('change:' + key, newSelection[key], slot, key);
+
+        different = true;
+        return;
+      }
+    });
+
+    if(different) {
       this.trigger('change', newSelection);
     }
+
+    this.currentSelection = newSelection;
   }
 
 , getValues: function () {

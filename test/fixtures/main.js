@@ -15,24 +15,41 @@ AppView = Ribcage.extend({
     'click a.pick': 'openPicker'
   }
 , afterInit: function () {
-    var quants = {};
+    var self = this
+      , threes = {}
+      , fours = {}
+      , fives = {};
 
     for(var i=1, ii=100; i<=ii; i++) {
-      quants[i] = i;
+      threes[i * 3] = i * 3;
     }
+
+    for(var i=1, ii=100; i<=ii; i++) {
+      fours[i * 4] = i * 4;
+    }
+
+    for(var i=1, ii=50; i<=ii; i++) {
+      fives[i * 5] = i * 5;
+    }
+
+    this.quants = {
+      threes: threes
+    , fours: fours
+    , fives: fives
+    };
 
     this.picker = new Picker({
       slots: {
         quantity: {
-          values: quants
+          values: threes
         , style: 'right'
-        , defaultKey: '50'
+        , defaultKey: '30'
         }
       , unit: {
           values: {
-            '1': 'Kg'
-          , '2': 'lb'
-          , '3': 'oz'
+            '1': 'Threes'
+          , '2': 'Fours'
+          , '3': 'Fives'
           }
         , style: 'right'
         }
@@ -40,10 +57,28 @@ AppView = Ribcage.extend({
     });
   }
 , afterRender: function () {
+    var self = this;
+
     this.appendSubview(this.picker, this.$('.spinholder'));
+
     this.listenTo(this.picker, 'change', function () {
       this.render();
     })
+
+    this.listenTo(this.picker, 'change:unit', function (newData) {
+      switch(newData.value) {
+        case 'Threes':
+          self.picker.setSlot('quantity', {values: self.quants.threes});
+        break;
+        case 'Fours':
+          self.picker.setSlot('quantity', {values: self.quants.fours});
+        break;
+        case 'Fives':
+          self.picker.setSlot('quantity', {values: self.quants.fives});
+        break;
+      }
+    });
+
     this.picker.render();
   }
 , context: function () {

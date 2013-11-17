@@ -3,14 +3,14 @@
  */
 
 var Ribcage = require('ribcage-view')
-	, each = require('lodash.foreach')
+  , each = require('lodash.foreach')
   , bind = require('lodash.bind')
   , isEqual = require('lodash.isequal')
   , clone = require('lodash.clone')
-	, Picker;
+  , Picker;
 
 Picker = Ribcage.extend({
-	cellHeight: 44
+  cellHeight: 44
 , friction: 0.003
 , isOpen: false
 , isFirstOpen: true
@@ -24,11 +24,11 @@ Picker = Ribcage.extend({
 *     @param {object} opts.defaultKey - The key of the default value this slot should have
 */
 , afterInit: function (opts) {
-		var self = this
+    var self = this
       , i = 0;
 
     // Clone the user's input because we're going to augment it
-		this.slots = clone(opts.slots);
+    this.slots = clone(opts.slots);
 
     each(this.slots, function (slot, key) {
       /**
@@ -60,11 +60,11 @@ Picker = Ribcage.extend({
     this.onTouchStart = bind(this.onTouchStart, this);
     this.onOrientationChange = bind(this.onOrientationChange, this);
     this.repositionWidget = bind(this.repositionWidget, this);
-		this.scrollStart = bind(this.scrollStart, this);
-		this.scrollMove = bind(this.scrollMove, this);
-		this.scrollEnd = bind(this.scrollEnd, this);
+    this.scrollStart = bind(this.scrollStart, this);
+    this.scrollMove = bind(this.scrollMove, this);
+    this.scrollEnd = bind(this.scrollEnd, this);
     this.returnToValidRange = bind(this.returnToValidRange, this);
-	}
+  }
 
 /**
 * Lets the user change the values of a slot after a picker has been initialized and shown
@@ -217,12 +217,12 @@ Picker = Ribcage.extend({
 * Iterate through each slot and get the height of each one
 */
 , calculateMaxOffsets: function () {
-	  var wrapHeight = this.$('.rp-slots-wrapper').height();
+    var wrapHeight = this.$('.rp-slots-wrapper').height();
 
-		each(this.slots, function (slot) {
+    each(this.slots, function (slot) {
       slot.maxOffset = wrapHeight - slot.el.clientHeight - 86;
-		})
-	}
+    })
+  }
 
 /**
 * Pass the slot object to the template so it can construct the lists
@@ -372,7 +372,7 @@ Picker = Ribcage.extend({
   }
 
 , scrollEnd: function (e) {
-		var swSlotWrapper = this.$('.rp-wrapper')
+    var swSlotWrapper = this.$('.rp-wrapper')
       , swFrame = $('.rp-frame')[0]
       , scrollDuration = e.timeStamp - this.scrollStartTime
       , newDuration

@@ -33,10 +33,10 @@ Picker = Ribcage.extend({
     each(this.slots, function (slot, key) {
       /**
       * This function is called when a slot stops scrolling outside its valid boundaries.
-      * We bind it with these values to make backWithinBoundaries faster and simpler.
+      * We bind it with these values to make returnToValidRange faster and simpler.
       */
-      slot.backWithinBoundaries = bind(self.backWithinBoundaries, self, slot, key);
-      slot.onTransitionEnd = bind(self.onTransitionEnd, self, slot, key);
+      slot.returnToValidRange = bind(self.returnToValidRange, self, slot, key);
+      slot.onSlotStopsSpinning = bind(self.onSlotStopsSpinning, self, slot, key);
 
       /**
       * Save the index to the slot, start the offset at 0.
@@ -54,15 +54,15 @@ Picker = Ribcage.extend({
     /**
     * We've got to bind these too, since they'll be called in the global context
     */
-    this.tapCancel = bind(this.tapCancel, this);
-    this.tapUp = bind(this.tapUp, this);
+    this.controlButtonTapCancelled = bind(this.controlButtonTapCancelled, this);
+    this.controlButtonTapCompleted = bind(this.controlButtonTapCompleted, this);
     this.onTouchStart = bind(this.onTouchStart, this);
     this.onOrientationChange = bind(this.onOrientationChange, this);
     this.repositionWidget = bind(this.repositionWidget, this);
 		this.scrollStart = bind(this.scrollStart, this);
 		this.scrollMove = bind(this.scrollMove, this);
 		this.scrollEnd = bind(this.scrollEnd, this);
-    this.backWithinBoundaries = bind(this.backWithinBoundaries, this);
+    this.returnToValidRange = bind(this.returnToValidRange, this);
 	}
 
 /**
@@ -78,11 +78,11 @@ Picker = Ribcage.extend({
 
     // Try our best to keep the same offset in the slot
     if(this.slots[slotKey].values[this.currentSelection[slotKey].value] != null) {
-      this.scrollToValue(slotKey, this.currentSelection[slotKey].key);
+      this.setSlotKey(slotKey, this.currentSelection[slotKey].key);
     }
     else {
       // The value doesn't exist.. try to scroll as close as possible
-      this.scrollTo(slotKey, this.slots[slotKey].currentOffset);
+      this.scrollToSlotOffset(slotKey, this.slots[slotKey].currentOffset);
     }
   }
 
@@ -106,7 +106,7 @@ Picker = Ribcage.extend({
       each(this.slots, function (slot, k) {
         // Align the slot at its default key if it is not already open
         if (slot.defaultKey != null) {
-          self.scrollToValue(k, slot.defaultKey);
+          self.setSlotKey(k, slot.defaultKey);
         }
 
         // Add the default transition
@@ -192,7 +192,7 @@ Picker = Ribcage.extend({
     e.stopPropagation();
 
     if (e.srcElement.className == 'rp-cancel' || e.srcElement.className == 'rp-done') {
-      this.tapDown(e);
+      this.controlButtonTapped(e);
     } else if (e.srcElement.className == 'rp-frame') {
       this.scrollStart(e);
     }
@@ -201,7 +201,7 @@ Picker = Ribcage.extend({
 /**
 * Iterate through each slot and get the width of each one
 */
-, calculateSlotsWidth: function () {
+, calculateSlotWidths: function () {
     var div = this.$('.rp-slots').children('div')
       , i = 0;
 
@@ -256,14 +256,14 @@ Picker = Ribcage.extend({
       this.slots[k].el = ul;
 
       // Listen for transitionEnd events
-      ul.addEventListener('webkitTransitionEnd', this.slots[k].onTransitionEnd, false);
+      ul.addEventListener('webkitTransitionEnd', this.slots[k].onSlotStopsSpinning, false);
     }
 
     /**
     * At this point the widget *should* be on the DOM, so we can calculate the
     * widths and heights of the slots.
     */
-    this.calculateSlotsWidth();
+    this.calculateSlotWidths();
     this.calculateMaxOffsets();
 
     /**
@@ -275,9 +275,9 @@ Picker = Ribcage.extend({
     if(isReady && !this.isFirstOpen) {
       each(this.slots, function (slot, k) {
         // Wipe out any transition
-        slot.el.removeEventListener('webkitTransitionEnd', slot.backWithinBoundaries, false);
+        slot.el.removeEventListener('webkitTransitionEnd', slot.returnToValidRange, false);
         slot.el.style.webkitTransitionDuration = '0';
-        self.setPosition(k, slot.currentOffset);
+        self.setSlotOffset(k, slot.currentOffset);
 
         // Add the default transition
         slot.el.style.webkitTransitionTimingFunction = 'cubic-bezier(0, 0, 0.2, 1)';
@@ -306,11 +306,6 @@ Picker = Ribcage.extend({
  *
  */
 
-, setPosition: function (slot, pos) {
-    this.slots[slot].currentOffset = pos;
-    this.slots[slot].el.style.webkitTransform = 'translate3d(0, ' + pos + 'px, 0)';
-  }
-
 , scrollStart: function (e) {
     var swFrame = this.$('.rp-frame')[0]
       , xPos
@@ -336,14 +331,14 @@ Picker = Ribcage.extend({
     var slotObj = this.slots[this.activeSlot];
 
     // Wipe out any transition
-    slotObj.el.removeEventListener('webkitTransitionEnd', slotObj.backWithinBoundaries, false);
+    slotObj.el.removeEventListener('webkitTransitionEnd', slotObj.returnToValidRange, false);
     slotObj.el.style.webkitTransitionDuration = '0';
 
     // Stop and hold slot position
     var theTransform = window.getComputedStyle(this.slots[this.activeSlot].el).webkitTransform;
     theTransform = new WebKitCSSMatrix(theTransform).m42;
     if (theTransform != this.slots[this.activeSlot].currentOffset) {
-      this.setPosition(this.activeSlot, theTransform);
+      this.setSlotOffset(this.activeSlot, theTransform);
     }
 
     this.startY = e.targetTouches[0].clientY;
@@ -364,7 +359,7 @@ Picker = Ribcage.extend({
       topDelta /= 2;
     }
 
-    this.setPosition(this.activeSlot, this.slots[this.activeSlot].currentOffset + topDelta);
+    this.setSlotOffset(this.activeSlot, this.slots[this.activeSlot].currentOffset + topDelta);
     this.startY = e.targetTouches[0].clientY;
 
     // Prevent slingshot effect
@@ -387,7 +382,7 @@ Picker = Ribcage.extend({
 
     // If we are outside of the boundaries, let's go back to the sheepfold
     if (this.slots[this.activeSlot].currentOffset > 0 || this.slots[this.activeSlot].currentOffset < this.slots[this.activeSlot].maxOffset) {
-      this.scrollTo(this.activeSlot, this.slots[this.activeSlot].currentOffset > 0 ? 0 : this.slots[this.activeSlot].maxOffset);
+      this.scrollToSlotOffset(this.activeSlot, this.slots[this.activeSlot].currentOffset > 0 ? 0 : this.slots[this.activeSlot].maxOffset);
       return false;
     }
 
@@ -397,7 +392,7 @@ Picker = Ribcage.extend({
     // The drag session was too short
     if (scrollDistance < this.cellHeight / 1.5 && scrollDistance > -this.cellHeight / 1.5) {
       if (this.slots[this.activeSlot].currentOffset % this.cellHeight) {
-        this.scrollTo(this.activeSlot, Math.round(this.slots[this.activeSlot].currentOffset / this.cellHeight) * this.cellHeight, '100ms');
+        this.scrollToSlotOffset(this.activeSlot, Math.round(this.slots[this.activeSlot].currentOffset / this.cellHeight) * this.cellHeight, '100ms');
       }
 
       return false;
@@ -433,7 +428,7 @@ Picker = Ribcage.extend({
       newPosition = Math.round(newPosition / this.cellHeight) * this.cellHeight;
     }
 
-    this.scrollTo(this.activeSlot, Math.round(newPosition), Math.round(newDuration) + 'ms');
+    this.scrollToSlotOffset(this.activeSlot, Math.round(newPosition), Math.round(newDuration) + 'ms');
 
     return true;
   }
@@ -443,30 +438,38 @@ Picker = Ribcage.extend({
 * that will bounce it back to the valid range if the destination
 * is out of bounds.
 */
-, scrollTo: function (slotNum, dest, runtime) {
+, scrollToSlotOffset: function (slotNum, dest, runtime) {
     this.slots[slotNum].el.style.webkitTransitionDuration = runtime ? runtime : '100ms';
-    this.setPosition(slotNum, dest ? dest : 0);
+    this.setSlotOffset(slotNum, dest ? dest : 0);
 
     // If we are outside of the boundaries go back to the sheepfold
     if (this.slots[slotNum].currentOffset > 0 || this.slots[slotNum].currentOffset < this.slots[slotNum].maxOffset) {
-      this.slots[slotNum].el.addEventListener('webkitTransitionEnd', this.slots[slotNum].backWithinBoundaries, false);
+      this.slots[slotNum].el.addEventListener('webkitTransitionEnd', this.slots[slotNum].returnToValidRange, false);
     }
+  }
+
+/**
+* Given an offset, moves the slot to that offset immediately
+*/
+, setSlotOffset: function (slot, pos) {
+    this.slots[slot].currentOffset = pos;
+    this.slots[slot].el.style.webkitTransform = 'translate3d(0, ' + pos + 'px, 0)';
   }
 
 /**
 * Given a key, scrolls the slot to that cell
 */
-, scrollToValue: function (slot, value) {
+, setSlotKey: function (slot, value) {
     var yPos, count, i;
 
-    this.slots[slot].el.removeEventListener('webkitTransitionEnd', this.slots[slot].backWithinBoundaries, false);
+    this.slots[slot].el.removeEventListener('webkitTransitionEnd', this.slots[slot].returnToValidRange, false);
     this.slots[slot].el.style.webkitTransitionDuration = '0';
 
     count = 0;
     for (i in this.slots[slot].values) {
       if (i == value) {
         yPos = count * this.cellHeight;
-        this.setPosition(slot, yPos);
+        this.setSlotOffset(slot, yPos);
         break;
       }
 
@@ -479,19 +482,19 @@ Picker = Ribcage.extend({
 * we knew that the scroll was going out of bounds. This function
 * ensures that the slot scrolls back within the valid bounds
 */
-, backWithinBoundaries: function (slot, key) {
+, returnToValidRange: function (slot, key) {
     if(slot) {
-      slot.el.removeEventListener('webkitTransitionEnd', slot.backWithinBoundaries, false);
+      slot.el.removeEventListener('webkitTransitionEnd', slot.returnToValidRange, false);
     }
 
-    this.scrollTo(key, slot.currentOffset > 0 ? 0 : slot.maxOffset, '150ms');
+    this.scrollToSlotOffset(key, slot.currentOffset > 0 ? 0 : slot.maxOffset, '150ms');
     return false;
   }
 
 /**
 * Called when a slot stops spinning, used to trigger the `change` event
 */
-, onTransitionEnd: function (slot, key) {
+, onSlotStopsSpinning: function (slot, key) {
     var self = this
       , newSelection = this.getValues()
       , different = false;
@@ -530,17 +533,17 @@ Picker = Ribcage.extend({
       return response;
     }
 
-    this.calculateSlotsWidth();
+    this.calculateSlotWidths();
 
     each(this.slots, function (slot, key) {
       // Remove any residual animation
-      slot.el.removeEventListener('webkitTransitionEnd', slot.backWithinBoundaries, false);
+      slot.el.removeEventListener('webkitTransitionEnd', slot.returnToValidRange, false);
       slot.el.style.webkitTransitionDuration = '0';
 
       if (slot.currentOffset > 0) {
-        self.setPosition(key, 0);
+        self.setSlotOffset(key, 0);
       } else if (slot.currentOffset < slot.maxOffset) {
-        self.setPosition(key, slot.maxOffset);
+        self.setSlotOffset(key, slot.maxOffset);
       }
 
       index = -Math.round(slot.currentOffset / self.cellHeight);
@@ -573,29 +576,29 @@ Picker = Ribcage.extend({
 * and the column widths needs to be recalculated
 */
 , onOrientationChange: function (e) {
-    window.scrollTo(0, 0);
+    window.scrollToSlotOffset(0, 0);
     this.repositionWidget();
-    this.calculateSlotsWidth();
+    this.calculateSlotWidths();
   }
 
 /**
  * Called when a touch starts on either the cancel or done buttons
  */
-, tapDown: function (e) {
+, controlButtonTapped: function (e) {
     /**
     * Bind the move and end events once a touch starts
     */
-    e.srcElement.addEventListener('touchmove', this.tapCancel, false);
-    e.srcElement.addEventListener('touchend', this.tapUp, false);
+    e.srcElement.addEventListener('touchmove', this.controlButtonTapCancelled, false);
+    e.srcElement.addEventListener('touchend', this.controlButtonTapCompleted, false);
   }
 
 /**
 * If a finger moves while its on a button, we should interpret that
 * as a "cancelled" touch, and remove the event listners
 */
-, tapCancel: function (e) {
-    e.srcElement.removeEventListener('touchmove', this.tapCancel, false);
-    e.srcElement.removeEventListener('touchend', this.tapUp, false);
+, controlButtonTapCancelled: function (e) {
+    e.srcElement.removeEventListener('touchmove', this.controlButtonTapCancelled, false);
+    e.srcElement.removeEventListener('touchend', this.controlButtonTapCompleted, false);
   }
 
 /**
@@ -603,9 +606,9 @@ Picker = Ribcage.extend({
 * lifted off a button without moving. This should be interpreted as
 * a button push.
 */
-, tapUp: function (e) {
+, controlButtonTapCompleted: function (e) {
     // Remove the event listeners from the button
-    this.tapCancel(e);
+    this.controlButtonTapCancelled(e);
 
     // Fire off the correct callback
     if (e.srcElement.className == 'rp-cancel') {

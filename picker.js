@@ -4,22 +4,24 @@
 
 var Ribcage = require('ribcage-view')
 	, each = require('lodash.foreach')
-  , map = require('lodash.map')
   , bind = require('lodash.bind')
   , clone = require('lodash.clone')
+  , isEqual = require('lodash.isEqual')
 	, Picker;
 
 Picker = Ribcage.extend({
 	cellHeight: 44
 , friction: 0.003
 , isOpen: false
+, isFirstOpen: true
+, currentSelection: {}
 
 /**
 * @param {object} opts - Picker options
 *   @param {object} opts.slots - The slots this picker should have
 *     @param {object} opts.values - A map of the values this slot should have
 *     @param {object} opts.style - The CSS style of this slot
-*     @param {object} opts.defaultValue - The key of the default value this slot should have
+*     @param {object} opts.defaultKey - The key of the default value this slot should have
 */
 , afterInit: function (opts) {
 		var self = this
@@ -34,6 +36,7 @@ Picker = Ribcage.extend({
       * We bind it with these values to make backWithinBoundaries faster and simpler.
       */
       slot.backWithinBoundaries = bind(self.backWithinBoundaries, self, slot, key);
+      slot.onTransitionEnd = bind(self.onTransitionEnd, self, slot, key);
 
       /**
       * Save the index to the slot, start the offset at 0.
@@ -43,6 +46,7 @@ Picker = Ribcage.extend({
       slot.index = i;
       slot.currentOffset = 0;
       slot.width = 0;
+      slot.defaultKey = slot.defaultKey == null ? Object.keys(slot.values)[0] : slot.defaultKey;
 
       ++i;
     });
@@ -58,8 +62,27 @@ Picker = Ribcage.extend({
 		this.scrollStart = bind(this.scrollStart, this);
 		this.scrollMove = bind(this.scrollMove, this);
 		this.scrollEnd = bind(this.scrollEnd, this);
-		this.backWithinBoundaries = bind(this.backWithinBoundaries, this);
+    this.backWithinBoundaries = bind(this.backWithinBoundaries, this);
 	}
+
+/**
+* Lets the user change the values of a slot after a picker has been initialized and shown
+*/
+, setSlot: function (slotKey, opts) {
+    if(!this.slots[slotKey])
+      throw new Error('setSlot can only be used to update a slot that already exists');
+
+    slot.values = clone(opts.values);
+
+    // Try our best to keep the same offset in the slot
+    if(slot.values[this.currentSelection[slotKey]] != null) {
+      this.scrollToValue(slotKey, this.currentSelection[slotKey]);
+    }
+    else {
+      // The value doesn't exist.. try to scroll as close as possible
+      this.scrollTo(slotKey, this.slots[slotKey].currentOffset);
+    }
+  }
 
 /**
 * The entire widget's markup is created with this template
@@ -70,7 +93,24 @@ Picker = Ribcage.extend({
 * Shows the picker by sliding it in from the bottom
 */
 , show: function () {
-    var swWrapper = this.$('.sw-wrapper');
+    var self = this
+      , swWrapper = this.$('.sw-wrapper');
+
+    this.isOpen = true;
+
+    if(this.isFirstOpen) {
+      this.isFirstOpen = false;
+
+      each(this.slots, function (slot, k) {
+        // Align the slot at its default key if it is not already open
+        if (slot.defaultKey != null) {
+          self.scrollToValue(k, slot.defaultKey);
+        }
+
+        // Add the default transition
+        slot.el.style.webkitTransitionTimingFunction = 'cubic-bezier(0, 0, 0.2, 1)';
+      });
+    }
 
     /**
     * This stops the picker from "sliding around"
@@ -112,6 +152,8 @@ Picker = Ribcage.extend({
 , hide: function () {
     var swWrapper = this.$('.sw-wrapper');
 
+    this.isOpen = false;
+
     /**
     * Removes any residual transition
     */
@@ -139,14 +181,6 @@ Picker = Ribcage.extend({
   }
 
 /**
-* Positions the top of the picker at the bottom of the screen.
-* (This is before any transforms are applied)
-*/
-, repositionWidget: function (e) {
-    this.$('.sw-wrapper').css('top', window.innerHeight + window.pageYOffset + 'px');
-  }
-
-/**
 * Delegates the handling of touch gestures to
 * either the scroll or dismissal handlers
 */
@@ -160,17 +194,6 @@ Picker = Ribcage.extend({
     } else if (e.srcElement.className == 'sw-frame') {
       this.scrollStart(e);
     }
-  }
-
-/**
-* On an orientation change, the window should be scrolled back to the top,
-* the widget should be aligned at the bottom of the screen,
-* and the column widths needs to be recalculated
-*/
-, onOrientationChange: function (e) {
-    window.scrollTo(0, 0);
-    this.repositionWidget();
-    this.calculateSlotsWidth();
   }
 
 /**
@@ -189,7 +212,7 @@ Picker = Ribcage.extend({
 /**
 * Iterate through each slot and get the height of each one
 */
-, calculatemaxOffsets: function () {
+, calculateMaxOffsets: function () {
 	  var wrapHeight = this.$('.sw-slots-wrapper').height();
 
 		each(this.slots, function (slot) {
@@ -213,6 +236,10 @@ Picker = Ribcage.extend({
 * their default values.
 */
 , afterRender: function () {
+    var self = this
+      , swWrapper = this.$('.sw-wrapper')
+      , isReady = swWrapper.height() > 0;
+
     this.activeSlot = null;
 
     for (var  k in this.slots) {
@@ -226,13 +253,8 @@ Picker = Ribcage.extend({
       this.slots[k].$el = $ul;
       this.slots[k].el = ul;
 
-      // Add the default transition
-      ul.style.webkitTransitionTimingFunction = 'cubic-bezier(0, 0, 0.2, 1)';
-
-      // Align the slot at its default key
-      if (this.slots[k].defaultValue != null) {
-        this.scrollToValue(k, this.slots[k].defaultValue);
-      }
+      // Listen for transitionEnd events
+      ul.addEventListener('webkitTransitionEnd', this.slots[k].onTransitionEnd, false);
     }
 
     /**
@@ -240,54 +262,41 @@ Picker = Ribcage.extend({
     * widths and heights of the slots.
     */
     this.calculateSlotsWidth();
-    this.calculatemaxOffsets();
+    this.calculateMaxOffsets();
 
     /**
     * This widget should be "closed" by default, but we can only safely do this after
     * the widget has been added to the DOM
     */
     this.repositionWidget();
+
+    if(isReady && !this.isFirstOpen) {
+      each(this.slots, function (slot, k) {
+        // Wipe out any transition
+        slot.el.removeEventListener('webkitTransitionEnd', slot.backWithinBoundaries, false);
+        slot.el.style.webkitTransitionDuration = '0';
+        self.setPosition(k, slot.currentOffset);
+
+        // Add the default transition
+        slot.el.style.webkitTransitionTimingFunction = 'cubic-bezier(0, 0, 0.2, 1)';
+      });
+    }
+
+    /**
+    * This handles the case where the picker is rendered by its parent view while
+    * it is still open
+    */
+    if(this.isOpen) {
+      /**
+      * Opens up the wrapper without a transform
+      */
+      swWrapper.css({
+        webkitTransitionTimingFunction: 'ease-out'
+      , webkitTransitionDuration: '0ms'
+      , webkitTransform:'translate3d(0, -260px, 0)'
+      });
+    }
   }
-
-/**
- * TODO: ACTUALLY GET SELECTED VALUES!
- */
-, getSelectedValues: function () {
-    var count
-      , index
-      , keys = []
-      , values = [];
-
-    this.calculateSlotsWidth();
-
-    each(this.slots, function (slot) {
-      // Remove any residual animation
-      slot.el.removeEventListener('webkitTransitionEnd', slot.backWithinBoundaries, false);
-      slot.el.style.webkitTransitionDuration = '0';
-
-      if (slot.currentOffset > 0) {
-        this.setPosition(i, 0);
-      } else if (slot.currentOffset < slot.maxOffset) {
-        this.setPosition(i, slot.maxOffset);
-      }
-
-      index = -Math.round(slot.currentOffset / this.cellHeight);
-
-      count = 0;
-      for (var i in this.slots[i].values) {
-        if (count == index) {
-          keys.push();
-          values.push(slot.values[i]);
-          break;
-        }
-
-        count += 1;
-      }
-    });
-
-    return { 'keys': keys, 'values': values };
-  }
-
 
 /**
  *
@@ -323,9 +332,9 @@ Picker = Ribcage.extend({
     }
 
     var slotObj = this.slots[this.activeSlot];
-    // Remove transition event (if any)
+
+    // Wipe out any transition
     slotObj.el.removeEventListener('webkitTransitionEnd', slotObj.backWithinBoundaries, false);
-    // Remove any residual transition
     slotObj.el.style.webkitTransitionDuration = '0';
 
     // Stop and hold slot position
@@ -475,6 +484,86 @@ Picker = Ribcage.extend({
 
     this.scrollTo(key, slot.currentOffset > 0 ? 0 : slot.maxOffset, '150ms');
     return false;
+  }
+
+/**
+* Called when a slot stops spinning, used to trigger the `change` event
+*/
+, onTransitionEnd: function (slot, key) {
+    var newSelection = this.getValues();
+
+    if(isEqual(newSelection, this.currentSelection)) {
+      return;
+    }
+    else {
+      this.currentSelection = newSelection;
+
+      this.trigger('change', newSelection);
+    }
+  }
+
+, getValues: function () {
+    var self = this
+      , count
+      , index
+      , response = {};
+
+
+    if(this.isFirstOpen) {
+      // We're not ready yet, so just return the defaults
+      each(this.slots, function (slot, key) {
+        response[key] = {key: slot.defaultKey, value: slot.values[slot.defaultKey]}
+      });
+
+      return response;
+    }
+
+    this.calculateSlotsWidth();
+
+    each(this.slots, function (slot, key) {
+      // Remove any residual animation
+      slot.el.removeEventListener('webkitTransitionEnd', slot.backWithinBoundaries, false);
+      slot.el.style.webkitTransitionDuration = '0';
+
+      if (slot.currentOffset > 0) {
+        self.setPosition(key, 0);
+      } else if (slot.currentOffset < slot.maxOffset) {
+        self.setPosition(key, slot.maxOffset);
+      }
+
+      index = -Math.round(slot.currentOffset / self.cellHeight);
+
+      count = 0;
+      for (var i in slot.values) {
+        if (count == index) {
+          response[key] = {key: i, value: slot.values[i]};
+          break;
+        }
+
+        count += 1;
+      }
+    });
+
+    return response;
+  }
+
+/**
+* Positions the top of the picker at the bottom of the screen.
+* (This is before any transforms are applied)
+*/
+, repositionWidget: function (e) {
+    this.$('.sw-wrapper').css('top', window.innerHeight + window.pageYOffset + 'px');
+  }
+
+/**
+* On an orientation change, the window should be scrolled back to the top,
+* the widget should be aligned at the bottom of the screen,
+* and the column widths needs to be recalculated
+*/
+, onOrientationChange: function (e) {
+    window.scrollTo(0, 0);
+    this.repositionWidget();
+    this.calculateSlotsWidth();
   }
 
 /**

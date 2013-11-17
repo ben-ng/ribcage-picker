@@ -8,59 +8,59 @@ var Picker = require('../../picker')
 Backbone.$ = $;
 
 AppView = Ribcage.extend({
-  template: function () {return '<a href="#" class="pick">Open Picker</a><div class="spinholder"></div>';}
+  template: require('./app.hbs')
+, quantity: 50
+, unit: 'lb'
 , events: {
     'click a.pick': 'openPicker'
   }
-, afterRender: function () {
-    var quants = {}
-      , spinner;
+, afterInit: function () {
+    var quants = {};
 
     for(var i=1, ii=100; i<=ii; i++) {
       quants[i] = i;
     }
 
-    spinner = new Picker({
+    this.picker = new Picker({
       slots: {
         quantity: {
           values: quants
         , style: 'right'
-        , defaultValue: 50
+        , defaultKey: '50'
         }
       , unit: {
           values: {
-            1: 'Kg'
-          , 2: 'lb'
-          , 3: 'oz'
+            '1': 'Kg'
+          , '2': 'lb'
+          , '3': 'oz'
           }
         , style: 'right'
-        , defaultValue: 2
         }
       }
     });
+  }
+, afterRender: function () {
+    this.appendSubview(this.picker, this.$('.spinholder'));
+    this.listenTo(this.picker, 'change', function () {
+      this.render();
+    })
+    this.picker.render();
+  }
+, context: function () {
+    var pickerVals = this.picker.getValues();
 
-    this.listenTo(spinner, 'change', this.pickerChange);
-    this.on('openPicker', function () {
-      spinner.show();
-    });
-
-    this.appendSubview(spinner, this.$('.spinholder'));
-
-    spinner.render();
+    return {
+      quantity: pickerVals.quantity.value
+    , unit: pickerVals.unit.value
+    };
   }
 , openPicker: function (e) {
     e.preventDefault();
     e.stopPropagation();
-
-    this.trigger('openPicker');
-  }
-, pickerChange: function (e) {
-    console.log('changed');
+    this.picker.show();
   }
 });
 
 App = new AppView({
   el: $('#app')
 });
-
-App.render();

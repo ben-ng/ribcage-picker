@@ -11,7 +11,7 @@ Demo
 [Try the demo](http://ben-ng.github.io/ribcage-picker/)
 
 Screenshot
-__________
+----------
 ![Demo Screenshot](http://ben-ng.github.io/ribcage-picker/screencap.jpg)
 
 Usage

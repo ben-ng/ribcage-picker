@@ -46,6 +46,7 @@ Picker = Ribcage.extend({
       slot.index = i;
       slot.currentOffset = 0;
       slot.width = 0;
+      slot.style = slot.style == null ? 'right' : slot.style;
       slot.defaultKey = slot.defaultKey == null ? Object.keys(slot.values)[0] : slot.defaultKey;
 
       ++i;
@@ -73,6 +74,7 @@ Picker = Ribcage.extend({
       throw new Error('setSlot can only be used to update a slot that already exists');
 
     this.slots[slotKey].values = clone(opts.values);
+    this.slots[slotKey].style = opts.style == null ? this.slots[slotKey].style : opts.style;
 
     this.render();
 

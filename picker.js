@@ -64,6 +64,23 @@ Picker = Ribcage.extend({
     this.scrollMove = bind(this.scrollMove, this);
     this.scrollEnd = bind(this.scrollEnd, this);
     this.returnToValidRange = bind(this.returnToValidRange, this);
+
+    /**
+    * Global events are kinda nasty, but we need to reposition the widget
+    * when the orientation changes, or when the page scrolls because of some other event.
+    */
+    window.addEventListener('orientationchange', this.onOrientationChange, true);
+    window.addEventListener('scroll', this.repositionWidget, true);
+    window.addEventListener('resize', this.repositionWidget, true);
+  }
+
+/**
+* Clean up the events we added in afterInit
+*/
+, beforeClose: function () {
+    window.removeEventListener('orientationchange', this.onOrientationChange, true);
+    window.removeEventListener('scroll', this.repositionWidget, true);
+    window.removeEventListener('resize', this.repositionWidget, true);
   }
 
 /**
@@ -141,13 +158,6 @@ Picker = Ribcage.extend({
     * and uses our scrolling logic when touches happen inside the picker
     */
     document.addEventListener('touchstart', this.onTouchStart, false);
-
-    /**
-    * Global events are kinda nasty, but we need to reposition the widget
-    * when the orientation changes, or when the page scrolls because of some other event.
-    */
-    window.addEventListener('orientationchange', this.onOrientationChange, true);
-    window.addEventListener('scroll', this.repositionWidget, true);
   }
 
 /**
@@ -180,8 +190,6 @@ Picker = Ribcage.extend({
     * Enable all scrolling and tapping again
     */
     document.removeEventListener('touchstart', this.onTouchStart, false);
-    window.removeEventListener('orientationchange', this.onOrientationChange, true);
-    window.removeEventListener('scroll', this.repositionWidget, true);
   }
 
 /**

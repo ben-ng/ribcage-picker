@@ -55,15 +55,13 @@ AppView = Ribcage.extend({
         }
       }
     });
-  }
-, afterRender: function () {
-    var self = this;
-
-    this.appendSubview(this.picker, this.$('.spinholder'));
 
     this.listenTo(this.picker, 'change', function () {
-      this.render();
-    })
+      var pickerVals = self.context();
+
+      self.$('.quantity').text(pickerVals.quantity);
+      self.$('.unit').text(pickerVals.unit);
+    });
 
     this.listenTo(this.picker, 'change:unit', function (newData) {
       switch(newData.value) {
@@ -78,6 +76,11 @@ AppView = Ribcage.extend({
         break;
       }
     });
+  }
+, afterRender: function () {
+    var self = this;
+
+    this.appendSubview(this.picker, this.$('.spinholder'));
 
     this.picker.render();
   }

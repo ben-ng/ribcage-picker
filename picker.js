@@ -77,7 +77,7 @@ Picker = Ribcage.extend({
     * Disables all scrolling outside of the wrapper until it is dismissed
     * and uses our scrolling logic when touches happen inside the picker
     */
-    document.addEventListener('touchstart', this.onTouchStart, false);
+    document.body.addEventListener('touchstart', this.onTouchStart, false);
   }
 
 /**
@@ -86,7 +86,7 @@ Picker = Ribcage.extend({
 , beforeClose: function () {
     window.removeEventListener('orientationchange', this.calculateSlotWidths, true);
     window.removeEventListener('resize', this.calculateSlotWidths, true);
-    document.removeEventListener('touchstart', this.onTouchStart, false);
+    document.body.removeEventListener('touchstart', this.onTouchStart, false);
   }
 
 /**
@@ -123,7 +123,8 @@ Picker = Ribcage.extend({
 * either the scroll or dismissal handlers
 */
 , onTouchStart: function (e) {
-    if (e.srcElement.className == 'rp-frame') {
+    var target = event.target || event.srcElement;
+    if (target.className.indexOf('rp-frame') >= 0) {
       // Stop the screen from moving!
       e.preventDefault();
       e.stopPropagation();

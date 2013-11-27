@@ -1,10 +1,11 @@
 .rp-wrapper {
 	position: fixed;
-	z-index: 1000;
+	z-index: 999999;
 	left: 0;
 	bottom: 0;
-	height: 215px;
+	right: 0;
 	width: 100%;
+	height: 215px;
 	font-family: helvetica, sans-serif;
 	background: rgba(0,0,0,0.7);
 	text-align: left;
@@ -43,6 +44,7 @@
 .rp-slots ul {
 	padding: 0 0 85px 0; margin:0;
 	list-style: none;
+	color: #000;
 }
 
 .rp-slots .rp-right { text-align: right; }

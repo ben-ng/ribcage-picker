@@ -1,66 +1,38 @@
 .rp-wrapper {
-	position:absolute;
-	z-index:1000;
-	left:0;
-	width:100%;
-	font-family:helvetica, sans-serif;
-	background:rgba(0,0,0,0.7);
-	text-align:left;
-}
-
-.rp-header {
-	position:relative;
-	width:100%; height:43px;
-	border-top:1px solid #000; border-bottom:1px solid #000;
-	background:url(./img/rp-header.png) 0 0 repeat-x;
-	opacity: 0.9;
-}
-
-.rp-cancel, .rp-done {
-	position:absolute;
-	top:7px;
-	height:20px; line-height:20px;
-	padding:0 5px; margin:0;
-	border-width:5px;
-	font-size:12px; font-weight:bold;
-	text-shadow:rgba(0,0,0,0.8) 0 -1px 0;
-	color:#fff;
-}
-
-.rp-cancel {
-	left:7px;
-	float:left;
-	-webkit-border-image:url(./img/rp-button-cancel.png) 5;
-}
-
-.rp-done {
-	right:7px;
-	float:right;
-	-webkit-border-image:url(./img/rp-button-done.png) 5;
+	position: fixed;
+	z-index: 1000;
+	left: 0;
+	bottom: 0;
+	height: 215px;
+	width: 100%;
+	font-family: helvetica, sans-serif;
+	background: rgba(0,0,0,0.7);
+	text-align: left;
 }
 
 .rp-pressed { opacity:0.4; }
 
 .rp-slots-wrapper {
-	position:relative; z-index:999;
-	display:block;
-	height:215px;
-	padding:0 11px;
-	overflow:hidden;
+	position: absolute;
+	left: 0; right: 0; top: 0; z-index:999;
+	display: block;
+	height: 215px;
+	padding: 0 11px;
+	overflow: hidden;
 }
 
 .rp-slots {
-	display:table;
-	width:100%;
-	background:#fcfcfc;
+	display: table;
+	width: 100%;
+	background: #fcfcfc;
 }
 
 .rp-slots div {
-	display:table-cell;
-	height:100%;
-	padding-top:86px;
-	border-left:2px solid #0d0e0f;
-	background-color:#fcfcfc;
+	display: table-cell;
+	height: 100%;
+	padding-top: 86px;
+	border-left: 2px solid #0d0e0f;
+	background-color: #fcfcfc;
 	background-image: url(./img/rp-slot-border.png);
 	background-position: 0 0, 100% 0;
 	background-repeat: repeat-y;
@@ -69,24 +41,24 @@
 .rp-slots div:first-child { border:0; }
 
 .rp-slots ul {
-	padding:0 0 85px 0; margin:0;
-	list-style:none;
+	padding: 0 0 85px 0; margin:0;
+	list-style: none;
 }
 
-.rp-slots .rp-right { text-align:right; }
-.rp-slots .rp-shrink { width:1%; }
-.rp-slots .rp-readonly { background:#ddd; }
+.rp-slots .rp-right { text-align: right; }
+.rp-slots .rp-shrink { width: 1%; }
+.rp-slots .rp-readonly { background: #ddd; }
 
 .rp-slots li {
-	padding:0 8px;
-	height:44px;
-	overflow:hidden;
-	font:bold 24px/44px Helvetica,sans-serif;
+	padding: 0 8px;
+	height: 4 4px;
+	overflow: hidden;
+	font: bold 24px/44px Helvetica,sans-serif;
 }
 
 .rp-frame {
-	position:absolute; z-index:1000;
-	left:0; right:0; bottom:0;
+	position: absolute; z-index:1000;
+	left: 0; right: 0; top: 0;
 	height:183px;
 	border-width:16px;
 	-webkit-border-image:url(./img/rp-alpha.png) 16;

@@ -12,9 +12,8 @@ var Ribcage = require('ribcage-view')
 Picker = Ribcage.extend({
   cellHeight: 44
 , friction: 0.003
-, isOpen: false
-, isFirstOpen: true
 , currentSelection: {}
+, defaultsApplied: false
 
 /**
 * @param {object} opts - Picker options
@@ -29,6 +28,7 @@ Picker = Ribcage.extend({
 
     // Clone the user's input because we're going to augment it
     this.slots = clone(opts.slots);
+    this.offsetParent = opts.offsetParent;
 
     each(this.slots, function (slot, key) {
       /**
@@ -49,17 +49,18 @@ Picker = Ribcage.extend({
       slot.style = slot.style == null ? 'right' : slot.style;
       slot.defaultKey = slot.defaultKey == null ? Object.keys(slot.values)[0] : slot.defaultKey;
 
+      self.currentSelection[key] = {
+        key: slot.defaultKey
+      , value: slot.values[slot.defaultKey]
+      };
+
       ++i;
     });
 
     /**
     * We've got to bind these too, since they'll be called in the global context
     */
-    this.controlButtonTapCancelled = bind(this.controlButtonTapCancelled, this);
-    this.controlButtonTapCompleted = bind(this.controlButtonTapCompleted, this);
     this.onTouchStart = bind(this.onTouchStart, this);
-    this.onOrientationChange = bind(this.onOrientationChange, this);
-    this.repositionWidget = bind(this.repositionWidget, this);
     this.scrollStart = bind(this.scrollStart, this);
     this.scrollMove = bind(this.scrollMove, this);
     this.scrollEnd = bind(this.scrollEnd, this);
@@ -69,24 +70,31 @@ Picker = Ribcage.extend({
     * Global events are kinda nasty, but we need to reposition the widget
     * when the orientation changes, or when the page scrolls because of some other event.
     */
-    window.addEventListener('orientationchange', this.onOrientationChange, true);
-    window.addEventListener('scroll', this.repositionWidget, true);
-    window.addEventListener('resize', this.repositionWidget, true);
+    window.addEventListener('orientationchange', this.calculateSlotWidths, true);
+    window.addEventListener('resize', this.calculateSlotWidths, true);
+
+    /**
+    * Disables all scrolling outside of the wrapper until it is dismissed
+    * and uses our scrolling logic when touches happen inside the picker
+    */
+    document.addEventListener('touchstart', this.onTouchStart, false);
   }
 
 /**
 * Clean up the events we added in afterInit
 */
 , beforeClose: function () {
-    window.removeEventListener('orientationchange', this.onOrientationChange, true);
-    window.removeEventListener('scroll', this.repositionWidget, true);
-    window.removeEventListener('resize', this.repositionWidget, true);
+    window.removeEventListener('orientationchange', this.calculateSlotWidths, true);
+    window.removeEventListener('resize', this.calculateSlotWidths, true);
+    document.removeEventListener('touchstart', this.onTouchStart, false);
   }
 
 /**
 * Lets the user change the values of a slot after a picker has been initialized and shown
 */
 , setSlot: function (slotKey, opts) {
+    var key;
+
     if(!this.slots[slotKey])
       throw new Error('setSlot can only be used to update a slot that already exists');
 
@@ -96,7 +104,7 @@ Picker = Ribcage.extend({
     this.render();
 
     // Try our best to keep the same offset in the slot
-    if(this.slots[slotKey].values[this.currentSelection[slotKey].value] != null) {
+    if(this.slots[slotKey].values[this.currentSelection[slotKey].key] != null) {
       this.setSlotKey(slotKey, this.currentSelection[slotKey].key);
     }
     else {
@@ -111,101 +119,19 @@ Picker = Ribcage.extend({
 , template: require('./picker.hbs')
 
 /**
-* Shows the picker by sliding it in from the bottom
-*/
-, show: function () {
-    var self = this
-      , swWrapper = this.$('.rp-wrapper');
-
-    this.isOpen = true;
-
-    if(this.isFirstOpen) {
-      this.isFirstOpen = false;
-
-      each(this.slots, function (slot, k) {
-        // Align the slot at its default key if it is not already open
-        if (slot.defaultKey != null) {
-          self.setSlotKey(k, slot.defaultKey);
-        }
-
-        // Add the default transition
-        slot.el.style.webkitTransitionTimingFunction = 'cubic-bezier(0, 0, 0.2, 1)';
-      });
-    }
-
-    /**
-    * This stops the picker from "sliding around"
-    * after an orientation change or scroll event.
-    * It'll just snap to the correct location.
-    */
-    swWrapper.one('webkitTransitionEnd', function () {
-      swWrapper.css({
-        webkitTransitionDuration: '0ms'
-      });
-    });
-
-    /**
-    * Opens up the wrapper with a transform
-    */
-    swWrapper.css({
-      webkitTransitionTimingFunction: 'ease-out'
-    , webkitTransitionDuration: '400ms'
-    , webkitTransform:'translate3d(0, -260px, 0)'
-    });
-
-    /**
-    * Disables all scrolling outside of the wrapper until it is dismissed
-    * and uses our scrolling logic when touches happen inside the picker
-    */
-    document.addEventListener('touchstart', this.onTouchStart, false);
-  }
-
-/**
-* Hides the picker by sliding it down and out
-*/
-, hide: function () {
-    var swWrapper = this.$('.rp-wrapper');
-
-    this.isOpen = false;
-
-    /**
-    * Removes any residual transition
-    */
-    swWrapper.one('webkitTransitionEnd', function () {
-      swWrapper.css({
-        webkitTransitionDuration: '0ms'
-      });
-    });
-
-    /**
-    * Closes the wrapper with a transform
-    */
-    swWrapper.css({
-      webkitTransitionTimingFunction: 'ease-in'
-    , webkitTransitionDuration: '400ms'
-    , webkitTransform:'translate3d(0, 0, 0)'
-    });
-
-    /**
-    * Enable all scrolling and tapping again
-    */
-    document.removeEventListener('touchstart', this.onTouchStart, false);
-  }
-
-/**
 * Delegates the handling of touch gestures to
 * either the scroll or dismissal handlers
 */
 , onTouchStart: function (e) {
-    // Stop the screen from moving!
-    e.preventDefault();
-    e.stopPropagation();
+    if (e.srcElement.className == 'rp-frame') {
+      // Stop the screen from moving!
+      e.preventDefault();
+      e.stopPropagation();
 
-    if (e.srcElement.className == 'rp-cancel' || e.srcElement.className == 'rp-done') {
-      this.controlButtonTapped(e);
-    } else if (e.srcElement.className == 'rp-frame') {
       this.scrollStart(e);
     }
+
+    // Let other events pass through
   }
 
 /**
@@ -276,13 +202,7 @@ Picker = Ribcage.extend({
     this.calculateSlotWidths();
     this.calculateMaxOffsets();
 
-    /**
-    * This widget should be "closed" by default, but we can only safely do this after
-    * the widget has been added to the DOM
-    */
-    this.repositionWidget();
-
-    if(isReady && !this.isFirstOpen) {
+    if(isReady) {
       each(this.slots, function (slot, k) {
         // Wipe out any transition
         slot.el.removeEventListener('webkitTransitionEnd', slot.returnToValidRange, false);
@@ -294,18 +214,17 @@ Picker = Ribcage.extend({
       });
     }
 
-    /**
-    * This handles the case where the picker is rendered by its parent view while
-    * it is still open
-    */
-    if(this.isOpen) {
-      /**
-      * Opens up the wrapper without a transform
-      */
-      swWrapper.css({
-        webkitTransitionTimingFunction: 'ease-out'
-      , webkitTransitionDuration: '0ms'
-      , webkitTransform:'translate3d(0, -260px, 0)'
+    if(!this.defaultsApplied) {
+      this.defaultsApplied = true;
+
+      each(this.slots, function (slot, k) {
+        // Align the slot at its default key if it is not already open
+        if (slot.defaultKey != null) {
+          self.setSlotKey(k, slot.defaultKey);
+        }
+
+        // Add the default transition
+        slot.el.style.webkitTransitionTimingFunction = 'cubic-bezier(0, 0, 0.2, 1)';
       });
     }
   }
@@ -533,16 +452,6 @@ Picker = Ribcage.extend({
       , index
       , response = {};
 
-
-    if(this.isFirstOpen) {
-      // We're not ready yet, so just return the defaults
-      each(this.slots, function (slot, key) {
-        response[key] = {key: slot.defaultKey, value: slot.values[slot.defaultKey]}
-      });
-
-      return response;
-    }
-
     this.calculateSlotWidths();
 
     each(this.slots, function (slot, key) {
@@ -570,75 +479,6 @@ Picker = Ribcage.extend({
     });
 
     return response;
-  }
-
-/**
-* Positions the top of the picker at the bottom of the screen.
-* (This is before any transforms are applied)
-*/
-, repositionWidget: function (e) {
-    this.$('.rp-wrapper').css('top', window.innerHeight + window.pageYOffset + 'px');
-  }
-
-/**
-* On an orientation change, the window should be scrolled back to the top,
-* the widget should be aligned at the bottom of the screen,
-* and the column widths needs to be recalculated
-*/
-, onOrientationChange: function (e) {
-    window.scrollToSlotOffset(0, 0);
-    this.repositionWidget();
-    this.calculateSlotWidths();
-  }
-
-/**
- * Called when a touch starts on either the cancel or done buttons
- */
-, controlButtonTapped: function (e) {
-    /**
-    * Bind the move and end events once a touch starts
-    */
-    e.srcElement.addEventListener('touchmove', this.controlButtonTapCancelled, false);
-    e.srcElement.addEventListener('touchend', this.controlButtonTapCompleted, false);
-  }
-
-/**
-* If a finger moves while its on a button, we should interpret that
-* as a "cancelled" touch, and remove the event listners
-*/
-, controlButtonTapCancelled: function (e) {
-    e.srcElement.removeEventListener('touchmove', this.controlButtonTapCancelled, false);
-    e.srcElement.removeEventListener('touchend', this.controlButtonTapCompleted, false);
-  }
-
-/**
-* If this event handler is called, it means that a finger touched and
-* lifted off a button without moving. This should be interpreted as
-* a button push.
-*/
-, controlButtonTapCompleted: function (e) {
-    // Remove the event listeners from the button
-    this.controlButtonTapCancelled(e);
-
-    // Fire off the correct callback
-    if (e.srcElement.className == 'rp-cancel') {
-      if(this.cancelAction)
-        this.cancelAction();
-    } else {
-      if(this.doneAction)
-        this.doneAction();
-    }
-
-    // Slide the picker widget out of view
-    this.hide();
-  }
-
-, setCancelAction: function (action) {
-    this.cancelAction = action;
-  }
-
-, setDoneAction: function (action) {
-    this.doneAction = action;
   }
 });
 

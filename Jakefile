@@ -20,7 +20,10 @@ var browserify = require('browserify')
 desc('Creates the test bundle');
 task('test', {async: true}, function () {
   var bundle = new browserify()
-    , out = fs.createWriteStream(BUILD_FILE);
+    , out = fs.createWriteStream(BUILD_FILE)
+    , compressPaths = function (p) {
+        return path.relative(__dirname, p);
+      };
 
   mkdirp(BUILD_DIR, function (err) {
     assert.ifError(err);

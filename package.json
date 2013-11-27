@@ -16,7 +16,8 @@
     "jquery-browserify": "1.8.x",
     "backbone": "1.0.x",
     "mkdirp": "0.3.x",
-    "cpr": "0.1.x"
+    "cpr": "0.1.x",
+    "phantom-limb": "0.0.x"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

@@ -1,6 +1,7 @@
 var Picker = require('../../picker')
   , Ribcage = require('ribcage-view')
   , Backbone = require('backbone')
+  , phantom = require('phantom-limb')
   , $ = require('jquery-browserify')
   , AppView
   , App;
@@ -11,9 +12,6 @@ AppView = Ribcage.extend({
   template: require('./app.hbs')
 , quantity: 50
 , unit: 'lb'
-, events: {
-    'click a.pick': 'openPicker'
-  }
 , afterInit: function () {
     var self = this
       , threes = {}
@@ -43,13 +41,13 @@ AppView = Ribcage.extend({
         quantity: {
           values: threes
         , style: 'right'
-        , defaultKey: '30'
+        , defaultKey: 30
         }
       , unit: {
           values: {
-            '1': 'Threes'
-          , '2': 'Fours'
-          , '3': 'Fives'
+            Threes: 3
+          , Fours: 4
+          , Fives: 5
           }
         , style: 'right'
         }
@@ -64,7 +62,7 @@ AppView = Ribcage.extend({
     });
 
     this.listenTo(this.picker, 'change:unit', function (newData) {
-      switch(newData.value) {
+      switch(newData.key) {
         case 'Threes':
           self.picker.setSlot('quantity', {values: self.quants.threes});
         break;
@@ -89,13 +87,8 @@ AppView = Ribcage.extend({
 
     return {
       quantity: pickerVals.quantity.value
-    , unit: pickerVals.unit.value
+    , unit: pickerVals.unit.key
     };
-  }
-, openPicker: function (e) {
-    e.preventDefault();
-    e.stopPropagation();
-    this.picker.show();
   }
 });
 

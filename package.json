@@ -1,6 +1,6 @@
 {
   "name": "ribcage-picker",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "A iOS-inspired UIPickerView for ribcage-ui",
   "main": "picker.js",
   "dependencies": {

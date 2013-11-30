@@ -381,8 +381,6 @@ Picker = Ribcage.extend({
 * Given an offset, moves the slot to that offset immediately
 */
 , setSlotOffset: function (slot, pos) {
-    console.log('setSlotOffset: ' + pos);
-
     this.slots[slot].currentOffset = pos;
     this.slots[slot].el.style.webkitTransform = 'translate3d(0, ' + pos + 'px, 0)';
   }

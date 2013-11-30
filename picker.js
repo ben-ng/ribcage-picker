@@ -27,7 +27,7 @@ Picker = Ribcage.extend({
       , i = 0;
 
     // Clone the user's input because we're going to augment it
-    this.slots = clone(opts.slots);
+    this.slots = clone(opts.slots, true);
     this.offsetParent = opts.offsetParent;
 
     each(this.slots, function (slot, key) {
@@ -98,7 +98,7 @@ Picker = Ribcage.extend({
     if(!this.slots[slotKey])
       throw new Error('setSlot can only be used to update a slot that already exists');
 
-    this.slots[slotKey].values = clone(opts.values);
+    this.slots[slotKey].values = clone(opts.values, true);
     this.slots[slotKey].style = opts.style == null ? this.slots[slotKey].style : opts.style;
 
     this.render();
@@ -370,7 +370,6 @@ Picker = Ribcage.extend({
 */
 , scrollToSlotOffset: function (slotNum, dest, runtime) {
     this.slots[slotNum].el.style.webkitTransitionDuration = runtime ? runtime : '100ms';
-    this.setSlotOffset(slotNum, dest ? dest : 0);
 
     // If we are outside of the boundaries go back to the sheepfold
     if (this.slots[slotNum].currentOffset > 0 || this.slots[slotNum].currentOffset < this.slots[slotNum].maxOffset) {
@@ -382,6 +381,8 @@ Picker = Ribcage.extend({
 * Given an offset, moves the slot to that offset immediately
 */
 , setSlotOffset: function (slot, pos) {
+    console.log('setSlotOffset: ' + pos);
+
     this.slots[slot].currentOffset = pos;
     this.slots[slot].el.style.webkitTransform = 'translate3d(0, ' + pos + 'px, 0)';
   }
@@ -448,6 +449,11 @@ Picker = Ribcage.extend({
   }
 
 , getValues: function () {
+    // Not ready! Return defaults!
+    if(this.$el.width() <= 0) {
+      return clone(this.currentSelection, true);
+    }
+
     var self = this
       , count
       , index

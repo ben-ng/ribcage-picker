@@ -30,6 +30,9 @@ Picker = Ribcage.extend({
     this.slots = clone(opts.slots, true);
     this.offsetParent = opts.offsetParent;
 
+    if(opts.onChange)
+      this.onChange = bind(opts.onChange, this);
+
     each(this.slots, function (slot, key) {
       /**
       * This function is called when a slot stops scrolling outside its valid boundaries.
@@ -370,6 +373,7 @@ Picker = Ribcage.extend({
 */
 , scrollToSlotOffset: function (slotNum, dest, runtime) {
     this.slots[slotNum].el.style.webkitTransitionDuration = runtime ? runtime : '100ms';
+    this.setSlotOffset(slotNum, dest ? dest : 0);
 
     // If we are outside of the boundaries go back to the sheepfold
     if (this.slots[slotNum].currentOffset > 0 || this.slots[slotNum].currentOffset < this.slots[slotNum].maxOffset) {
@@ -432,7 +436,7 @@ Picker = Ribcage.extend({
       if(! isEqual(newSelection[key], self.currentSelection[key])) {
         self.currentSelection[key] = newSelection[key];
 
-        self.trigger('change:' + key, newSelection[key], slot, key);
+        self.onChange(newSelection, key, slot);
 
         different = true;
         return;
@@ -440,10 +444,19 @@ Picker = Ribcage.extend({
     });
 
     if(different) {
-      this.trigger('change', newSelection);
+      this.onChange(newSelection);
     }
 
     this.currentSelection = newSelection;
+  }
+
+, onChange: function (newSelection, key, slot) {
+    if(key && slot) {
+      this.trigger('change:' + key, newSelection[key], slot, key);
+    }
+    else {
+      this.trigger('change', newSelection);
+    }
   }
 
 , getValues: function () {

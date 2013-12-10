@@ -75,12 +75,6 @@ Picker = Ribcage.extend({
     */
     window.addEventListener('orientationchange', this.calculateSlotWidths, true);
     window.addEventListener('resize', this.calculateSlotWidths, true);
-
-    /**
-    * Disables all scrolling outside of the wrapper until it is dismissed
-    * and uses our scrolling logic when touches happen inside the picker
-    */
-    document.body.addEventListener('touchstart', this.onTouchStart, false);
   }
 
 /**
@@ -89,7 +83,7 @@ Picker = Ribcage.extend({
 , beforeClose: function () {
     window.removeEventListener('orientationchange', this.calculateSlotWidths, true);
     window.removeEventListener('resize', this.calculateSlotWidths, true);
-    document.body.removeEventListener('touchstart', this.onTouchStart, false);
+    this.$('.rp-frame')[0].removeEventListener('touchstart', this.onTouchStart, false);
   }
 
 /**
@@ -231,6 +225,11 @@ Picker = Ribcage.extend({
         slot.el.style.webkitTransitionTimingFunction = 'cubic-bezier(0, 0, 0.2, 1)';
       });
     }
+
+    /**
+    * Uses our scrolling logic when touches happen inside the picker
+    */
+    this.$('.rp-frame')[0].addEventListener('touchstart', this.onTouchStart, false);
   }
 
 /**

@@ -10,6 +10,10 @@ h2 {
   font-size: 1.1em;
 }
 
+h3 {
+  font-size: 1em;
+}
+
 #app {
   position: absolute;
   top:0;

@@ -93,7 +93,7 @@ AppView = Ribcage.extend({
   }
 });
 
-App = new AppView();
+App = new AppView({});
 document.body.appendChild(App.el);
 App.el.id = 'app';
 App.render();

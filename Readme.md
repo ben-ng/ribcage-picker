@@ -1,18 +1,22 @@
 ribcage-picker
 ==============
 
-This is a widget that mimics the native "slot-machine" style pickers now ubiquitious on our mobile devices.
+This is a responsive widget that mimics the native "slot-machine" style pickers now ubiquitious on our mobile devices.
+
+Desktop browsers will get regular old `<select>` elements.
+
+Browsers that meet the following criteria will get a touch-optimized slot-machine when the `<select>` elements are tapped.
+
+ * Supports touch events
+ * Supports 3D transforms
+ * Supports CSS transitions
 
 `ribcage-picker` is a [Backbone](http://backbonejs.org/) view, best served with the other great components in the [ribcage-ui](https://github.com/Techwraith/ribcage-ui) collection.
 
-Demo
-----
+Live Demo
+---------
 
 [Try the demo](http://ben-ng.github.io/ribcage-picker/)
-
-Screenshot
-----------
-![Demo Screenshot](http://ben-ng.github.io/ribcage-picker/screencap.jpg)
 
 Usage
 -----
@@ -86,13 +90,6 @@ this.listenTo(picker, 'change:unit', function (selection) {
   }
 });
 ```
-
-Limitations
------------
-
-This widget will **only** work on iOS and Android devices. While you can use it standalone just fine, I intended it to be a building block of more robust, responsive widgets that work on all devices.
-
-Is `ribcage-picker` missing a feature you need? Send me a PR!
 
 License & Acknowledgements
 --------------------------

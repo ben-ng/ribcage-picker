@@ -4,5 +4,6 @@ rm -r test
 mv bundle.js bundle.dev.js
 uglifyjs bundle.dev.js > bundle.js
 git commit -a -m "Sync to master"
+git push origin gh-pages
 echo "Done"
 

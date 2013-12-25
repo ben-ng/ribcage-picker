@@ -22,9 +22,10 @@ Picker = Ribcage.extend({
                       modernizr.csstransforms &&
                       modernizr.csstransforms3d &&
                       modernizr.touch
-
+, slotMachineOpen: false
 , events: {
     'change .js-select': 'onSelectChange'
+  , 'touchstart .rp-select-blocker': 'toggleSlotMachine'
   }
 
 /**
@@ -91,6 +92,16 @@ Picker = Ribcage.extend({
     */
     window.addEventListener('orientationchange', this.calculateSlotWidths, true);
     window.addEventListener('resize', this.calculateSlotWidths, true);
+  }
+
+, toggleSlotMachine: function () {
+    if(this.slotMachineOpen) {
+      this.$('.rp-wrapper').removeClass('rp-wrapper-open');
+    }
+    else {
+      this.$('.rp-wrapper').addClass('rp-wrapper-open');
+    }
+    this.slotMachineOpen = !this.slotMachineOpen;
   }
 
 /**
@@ -188,6 +199,7 @@ Picker = Ribcage.extend({
     return {
       slots: this.slots
     , slotMachineCapable: this.slotMachineCapable
+    , slotMachineOpen: this.slotMachineOpen
     };
   }
 
@@ -475,16 +487,17 @@ Picker = Ribcage.extend({
 /**
 * Called when a slot stops spinning, used to trigger the `change` event
 */
-, onSlotStopsSpinning: function (slot, key) {
+, onSlotStopsSpinning: function () {
     var self = this
       , newSelection = this.getValues()
       , different = false;
 
-    each(newSelection, function (slot) {
-      if(! isEqual(newSelection[key], self.currentSelection[key])) {
-        self.currentSelection[key] = newSelection[key];
+    each(newSelection, function (slot, slotKey) {
+      if(! isEqual(newSelection[slotKey], self.currentSelection[slotKey])) {
+        self.currentSelection[slotKey] = newSelection[slotKey];
 
-        self.onChange(newSelection, key, slot);
+        self.onChange(newSelection, slotKey, slot);
+        self.setSlotKey(slotKey, newSelection[slotKey].key);
 
         different = true;
         return;
@@ -512,9 +525,9 @@ Picker = Ribcage.extend({
     this.trigger('change', clone(this.currentSelection, true));
   }
 
-, onChange: function (newSelection, key, slot) {
-    if(key && slot) {
-      this.trigger('change:' + key, newSelection[key], slot, key);
+, onChange: function (newSelection, slotKey, slot) {
+    if(slotKey && slot) {
+      this.trigger('change:' + slotKey, newSelection[slotKey], slot, slotKey);
     }
     else {
       this.trigger('change', clone(this.currentSelection, true));

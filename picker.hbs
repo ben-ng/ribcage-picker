@@ -1,5 +1,27 @@
+<div class="rp-select-wrap">
+<form>
+{{#each slots}}
+  <select class="js-select picker-select-{{@key}}">
+  {{#each values}}
+    <option value="{{@key}}">{{@key}}</option>
+  {{/each}}
+  </select>
+{{/each}}
+{{!--
+  This blocks the selects from receiving touch events
+  while allowing us to keep using the same styles.
+  Using `disabled` would cause browsers to override
+  the styles.
+--}}
 {{#if slotMachineCapable}}
-<div class="rp-wrapper">
+<div class="rp-select-blocker needsclick">
+</div>
+{{/if}}
+</form>
+</div>
+
+{{#if slotMachineCapable}}
+<div class="rp-wrapper{{#if slotMachineOpen}} rp-wrapper-open{{/if}}">
   <div class="rp-slots-wrapper">
     <div class="rp-slots">
     {{#each slots}}
@@ -15,17 +37,5 @@
   </div>
   <div class="rp-frame needsclick"></div>
   </div>
-</div>
-{{else}}
-<div class="rp-select-wrap">
-<form>
-{{#each slots}}
-  <select class="js-select picker-select-{{@key}}">
-  {{#each values}}
-    <option value="{{@key}}">{{@key}}</option>
-  {{/each}}
-  </select>
-{{/each}}
-</form>
 </div>
 {{/if}}

@@ -92,3 +92,4 @@ AppView = Ribcage.extend({
 });
 
 App = new AppView({el: document.getElementById('app')});
+App.render();

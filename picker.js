@@ -214,7 +214,10 @@ Picker = Ribcage.extend({
       , swWrapper = this.$('.rp-wrapper')
       , isReady = swWrapper.height() > 0;
 
-    // Everything beyond here is slotmachine stuff
+    /**
+    * If no slot machine is available, this block will either
+    * apply the default value or select the last selected value
+    */
     if(!this.slotMachineCapable) {
       each(this.slots, function (slot, k) {
         // Align the slot at its default key if it is not already open
@@ -267,6 +270,9 @@ Picker = Ribcage.extend({
       });
     }
 
+    /**
+    * If no default has been applied yet, try to apply one
+    */
     if(!this.defaultsApplied) {
       this.defaultsApplied = true;
 
@@ -274,6 +280,19 @@ Picker = Ribcage.extend({
         // Align the slot at its default key if it is not already open
         if (slot.defaultKey != null) {
           self.setSlotKey(k, slot.defaultKey);
+        }
+
+        // Add the default transition
+        slot.el.style.webkitTransitionTimingFunction = 'cubic-bezier(0, 0, 0.2, 1)';
+      });
+    }
+    /**
+    * Otherwise, restore what ever was last selected
+    */
+    else {
+      each(this.slots, function (slot, k) {
+        if(self.currentSelection[k]) {
+          self.setSlotKey(k, self.currentSelection[k].key);
         }
 
         // Add the default transition
@@ -460,22 +479,27 @@ Picker = Ribcage.extend({
 /**
 * Given a key, scrolls the slot to that cell
 */
-, setSlotKey: function (slot, value) {
+, setSlotKey: function (slotKey, valueKey) {
     var yPos, count, i;
 
-    this.$('.picker-select-' + slot).val(value);
+    this.$('.picker-select-' + slotKey).val(valueKey);
+
+    this.currentSelection[slotKey] = {
+      key: valueKey
+    , value: this.slots[slotKey].values[valueKey]
+    };
 
     if(!this.slotMachineCapable)
       return this;
 
-    this.slots[slot].el.removeEventListener('webkitTransitionEnd', this.slots[slot].returnToValidRange, false);
-    this.slots[slot].el.style.webkitTransitionDuration = '0';
+    this.slots[slotKey].el.removeEventListener('webkitTransitionEnd', this.slots[slotKey].returnToValidRange, false);
+    this.slots[slotKey].el.style.webkitTransitionDuration = '0';
 
     count = 0;
-    for (i in this.slots[slot].values) {
-      if (i == value) {
+    for (i in this.slots[slotKey].values) {
+      if (i == valueKey) {
         yPos = count * this.cellHeight;
-        this.setSlotOffset(slot, yPos);
+        this.setSlotOffset(slotKey, yPos);
         break;
       }
 
@@ -507,10 +531,8 @@ Picker = Ribcage.extend({
 
     each(newSelection, function (slot, slotKey) {
       if(! isEqual(newSelection[slotKey], self.currentSelection[slotKey])) {
-        self.currentSelection[slotKey] = newSelection[slotKey];
-
-        self.onChange(newSelection, slotKey, slot);
         self.setSlotKey(slotKey, newSelection[slotKey].key);
+        self.onChange(newSelection, slotKey, slot);
 
         different = true;
         return;

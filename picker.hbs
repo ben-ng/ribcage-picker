@@ -1,3 +1,4 @@
+{{#if slotMachineCapable}}
 <div class="rp-wrapper">
   <div class="rp-slots-wrapper">
     <div class="rp-slots">
@@ -15,3 +16,16 @@
   <div class="rp-frame needsclick"></div>
   </div>
 </div>
+{{else}}
+<div class="rp-select-wrap">
+<form>
+{{#each slots}}
+  <select class="js-select picker-select-{{@key}}">
+  {{#each values}}
+    <option value="{{@key}}">{{@key}}</option>
+  {{/each}}
+  </select>
+{{/each}}
+</form>
+</div>
+{{/if}}

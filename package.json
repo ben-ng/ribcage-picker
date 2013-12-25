@@ -4,16 +4,17 @@
   "description": "A iOS-inspired UIPickerView for ribcage-ui",
   "main": "picker.js",
   "dependencies": {
-    "lodash.foreach": "2.3.x",
-    "lodash.bind": "2.3.x",
-    "lodash.isequal": "2.3.x",
-    "lodash.clone": "2.3.x",
-    "hbsfy": "1.0.x"
+    "lodash.foreach": "~2.4.1",
+    "lodash.bind": "~2.4.1",
+    "lodash.isequal": "~2.4.1",
+    "lodash.clone": "~2.4.1",
+    "hbsfy": "1.0.x",
+    "lodash.keys": "~2.4.1"
   },
   "devDependencies": {
-    "browserify": "2.35.x",
-    "ribcage-view": "0.0.x",
-    "jquery-browserify": "1.8.x",
+    "atomify": "~0.0.10",
+    "ribcage-view": "~0.0.12",
+    "jquery-browserify": "~1.8.1",
     "backbone": "1.0.x",
     "mkdirp": "0.3.x",
     "cpr": "0.1.x",

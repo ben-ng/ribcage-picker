@@ -2,11 +2,15 @@
  * Derived from Matteo Spinelli's original implementation, see LICENSE for details
  */
 
+/* global WebKitCSSMatrix */
+
 var Ribcage = require('ribcage-view')
   , each = require('lodash.foreach')
   , bind = require('lodash.bind')
   , isEqual = require('lodash.isequal')
   , clone = require('lodash.clone')
+  , keys = require('lodash.keys')
+  , modernizr = require('./modernizr')
   , Picker;
 
 Picker = Ribcage.extend({
@@ -14,6 +18,14 @@ Picker = Ribcage.extend({
 , friction: 0.003
 , currentSelection: {}
 , defaultsApplied: false
+, slotMachineCapable: modernizr.csstransitions &&
+                      modernizr.csstransforms &&
+                      modernizr.csstransforms3d &&
+                      modernizr.touch
+
+, events: {
+    'change .js-select': 'onSelectChange'
+  }
 
 /**
 * @param {object} opts - Picker options
@@ -28,10 +40,14 @@ Picker = Ribcage.extend({
 
     // Clone the user's input because we're going to augment it
     this.slots = clone(opts.slots, true);
-    this.offsetParent = opts.offsetParent;
 
     if(opts.onChange)
       this.onChange = bind(opts.onChange, this);
+
+    // Everything beyond here is slotmachine stuff
+    if(!this.slotMachineCapable)
+      return this;
+    this.offsetParent = opts.offsetParent;
 
     each(this.slots, function (slot, key) {
       /**
@@ -50,7 +66,7 @@ Picker = Ribcage.extend({
       slot.currentOffset = 0;
       slot.width = 0;
       slot.style = slot.style == null ? 'right' : slot.style;
-      slot.defaultKey = slot.defaultKey == null ? Object.keys(slot.values)[0] : slot.defaultKey;
+      slot.defaultKey = slot.defaultKey == null ? keys(slot.values)[0] : slot.defaultKey;
 
       self.currentSelection[key] = {
         key: slot.defaultKey
@@ -81,6 +97,11 @@ Picker = Ribcage.extend({
 * Clean up the events we added in afterInit
 */
 , beforeClose: function () {
+
+    // Everything beyond here is slotmachine stuff
+    if(!this.slotMachineCapable)
+      return this;
+
     window.removeEventListener('orientationchange', this.calculateSlotWidths, true);
     window.removeEventListener('resize', this.calculateSlotWidths, true);
     this.$('.rp-frame')[0].removeEventListener('touchstart', this.onTouchStart, false);
@@ -90,10 +111,12 @@ Picker = Ribcage.extend({
 * Lets the user change the values of a slot after a picker has been initialized and shown
 */
 , setSlot: function (slotKey, opts) {
-    var key;
+    var self = this;
 
     if(!this.slots[slotKey])
       throw new Error('setSlot can only be used to update a slot that already exists');
+
+    this.getValues();
 
     this.slots[slotKey].values = clone(opts.values, true);
     this.slots[slotKey].style = opts.style == null ? this.slots[slotKey].style : opts.style;
@@ -101,13 +124,15 @@ Picker = Ribcage.extend({
     this.render();
 
     // Try our best to keep the same offset in the slot
-    if(this.slots[slotKey].values[this.currentSelection[slotKey].key] != null) {
-      this.setSlotKey(slotKey, this.currentSelection[slotKey].key);
-    }
-    else {
-      // The value doesn't exist.. try to scroll as close as possible
-      this.scrollToSlotOffset(slotKey, this.slots[slotKey].currentOffset);
-    }
+    each(this.slots, function (slot, slotKey) {
+      if(slot.values[self.currentSelection[slotKey].key] != null) {
+        self.setSlotKey(slotKey, self.currentSelection[slotKey].key);
+      }
+      else {
+        // The value doesn't exist.. try to scroll as physically close as possible
+        self.scrollToSlotOffset(slotKey, slot.currentOffset);
+      }
+    });
   }
 
 /**
@@ -153,7 +178,7 @@ Picker = Ribcage.extend({
 
     each(this.slots, function (slot) {
       slot.maxOffset = wrapHeight - slot.el.clientHeight - 86;
-    })
+    });
   }
 
 /**
@@ -162,6 +187,7 @@ Picker = Ribcage.extend({
 , context: function () {
     return {
       slots: this.slots
+    , slotMachineCapable: this.slotMachineCapable
     };
   }
 
@@ -175,6 +201,10 @@ Picker = Ribcage.extend({
     var self = this
       , swWrapper = this.$('.rp-wrapper')
       , isReady = swWrapper.height() > 0;
+
+    // Everything beyond here is slotmachine stuff
+    if(!this.slotMachineCapable)
+      return this;
 
     this.activeSlot = null;
 
@@ -303,7 +333,7 @@ Picker = Ribcage.extend({
 
 , scrollEnd: function (e) {
     var swSlotWrapper = this.$('.rp-wrapper')
-      , swFrame = $('.rp-frame')[0]
+      , swFrame = this.$('.rp-frame')[0]
       , scrollDuration = e.timeStamp - this.scrollStartTime
       , newDuration
       , newScrollDistance
@@ -370,13 +400,27 @@ Picker = Ribcage.extend({
 * that will bounce it back to the valid range if the destination
 * is out of bounds.
 */
-, scrollToSlotOffset: function (slotNum, dest, runtime) {
-    this.slots[slotNum].el.style.webkitTransitionDuration = runtime ? runtime : '100ms';
-    this.setSlotOffset(slotNum, dest ? dest : 0);
+, scrollToSlotOffset: function (slotKey, dest, runtime) {
+    if(!this.slotMachineCapable) {
+      var valKeys = keys(this.slots[slotKey].values);
+
+      if(dest >= valKeys.length)
+        dest = valKeys.length - 1;
+
+      if(dest < 0)
+        dest = 0;
+
+      this.setSlotKey(slotKey, valKeys[dest]);
+
+      return this;
+    }
+
+    this.slots[slotKey].el.style.webkitTransitionDuration = runtime ? runtime : '100ms';
+    this.setSlotOffset(slotKey, dest ? dest : 0);
 
     // If we are outside of the boundaries go back to the sheepfold
-    if (this.slots[slotNum].currentOffset > 0 || this.slots[slotNum].currentOffset < this.slots[slotNum].maxOffset) {
-      this.slots[slotNum].el.addEventListener('webkitTransitionEnd', this.slots[slotNum].returnToValidRange, false);
+    if (this.slots[slotKey].currentOffset > 0 || this.slots[slotKey].currentOffset < this.slots[slotKey].maxOffset) {
+      this.slots[slotKey].el.addEventListener('webkitTransitionEnd', this.slots[slotKey].returnToValidRange, false);
     }
   }
 
@@ -393,6 +437,11 @@ Picker = Ribcage.extend({
 */
 , setSlotKey: function (slot, value) {
     var yPos, count, i;
+
+    this.$('.picker-select-' + slot).val(value);
+
+    if(!this.slotMachineCapable)
+      return this;
 
     this.slots[slot].el.removeEventListener('webkitTransitionEnd', this.slots[slot].returnToValidRange, false);
     this.slots[slot].el.style.webkitTransitionDuration = '0';
@@ -449,25 +498,53 @@ Picker = Ribcage.extend({
     this.currentSelection = newSelection;
   }
 
+/**
+* Called when a <select> value is changed
+*/
+, onSelectChange: function (e) {
+    var elem = this.$(e.target)
+      , key = elem.attr('class').split('-').pop()
+      , slot = this.slots[key];
+
+    this.getValues();
+
+    this.trigger('change:' + key, clone(this.currentSelection[key], true), slot, key);
+    this.trigger('change', clone(this.currentSelection, true));
+  }
+
 , onChange: function (newSelection, key, slot) {
     if(key && slot) {
       this.trigger('change:' + key, newSelection[key], slot, key);
     }
     else {
-      this.trigger('change', newSelection);
+      this.trigger('change', clone(this.currentSelection, true));
     }
   }
 
 , getValues: function () {
+    var self = this
+      , count
+      , index
+      , i
+      , response = {};
+
+    // If there is no slotmachine, read from the select input
+    if(!this.slotMachineCapable) {
+      each(this.slots, function (slot, key) {
+        i = self.$('.picker-select-' + key).val();
+        response[key] = {key: i, value: slot.values[i]};
+        slot.currentOffset = keys(slot.values).indexOf(i);    // Needed for setSlot
+      });
+
+      this.currentSelection = response;
+
+      return clone(response, true);
+    }
+
     // Not ready! Return defaults!
     if(this.$el.width() <= 0) {
       return clone(this.currentSelection, true);
     }
-
-    var self = this
-      , count
-      , index
-      , response = {};
 
     this.calculateSlotWidths();
 

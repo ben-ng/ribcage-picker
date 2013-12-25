@@ -1,32 +1,30 @@
 var Picker = require('../../picker')
   , Ribcage = require('ribcage-view')
-  , Backbone = require('backbone')
-  , phantom = require('phantom-limb')
-  , $ = require('jquery-browserify')
   , AppView
   , App;
 
-Backbone.$ = $;
+// require('phantom-limb');
 
 AppView = Ribcage.extend({
   template: require('./app.hbs')
 , quantity: 50
 , unit: 'lb'
 , afterInit: function () {
-    var self = this
+    var i
+      , ii
       , threes = {}
       , fours = {}
       , fives = {};
 
-    for(var i=1, ii=100; i<=ii; i++) {
+    for(i=1, ii=100; i<=ii; i++) {
       threes[i * 3] = i * 3;
     }
 
-    for(var i=1, ii=100; i<=ii; i++) {
+    for(i=1, ii=100; i<=ii; i++) {
       fours[i * 4] = i * 4;
     }
 
-    for(var i=1, ii=50; i<=ii; i++) {
+    for(i=1, ii=50; i<=ii; i++) {
       fives[i * 5] = i * 5;
     }
 
@@ -53,6 +51,16 @@ AppView = Ribcage.extend({
         }
       }
     });
+  }
+, afterRender: function () {
+    var self = this;
+
+    this.stopListening(this.picker);
+
+    this.appendSubview(this.picker, this.$('.spinholder'));
+
+    this.picker.render();
+    this.picker.delegateEvents();
 
     this.listenTo(this.picker, 'change', function () {
       var pickerVals = self.context();
@@ -75,13 +83,6 @@ AppView = Ribcage.extend({
       }
     });
   }
-, afterRender: function () {
-    var self = this;
-
-    this.appendSubview(this.picker, this.$('.spinholder'));
-
-    this.picker.render();
-  }
 , context: function () {
     var pickerVals = this.picker.getValues();
 
@@ -92,6 +93,7 @@ AppView = Ribcage.extend({
   }
 });
 
-App = new AppView({
-  el: $('#app')
-});
+App = new AppView();
+document.body.appendChild(App.el);
+App.el.id = 'app';
+App.render();

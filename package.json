@@ -8,17 +8,15 @@
     "lodash.bind": "~2.4.1",
     "lodash.isequal": "~2.4.1",
     "lodash.clone": "~2.4.1",
-    "hbsfy": "1.0.x",
-    "lodash.keys": "~2.4.1"
+    "lodash.keys": "~2.4.1",
+    "hbsfy": "1.0.x"
   },
   "devDependencies": {
-    "atomify": "~0.0.10",
     "ribcage-view": "~0.0.12",
-    "jquery-browserify": "~1.8.1",
-    "backbone": "1.0.x",
     "mkdirp": "0.3.x",
     "cpr": "0.1.x",
-    "phantom-limb": "0.0.x"
+    "phantom-limb": "0.0.x",
+    "browserify": "~3.14.1"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

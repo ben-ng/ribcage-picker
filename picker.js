@@ -25,7 +25,7 @@ Picker = Ribcage.extend({
 , slotMachineOpen: false
 , events: {
     'change .js-select': 'onSelectChange'
-  , 'touchstart .rp-select-blocker': 'toggleSlotMachine'
+  , 'touchend .rp-select-blocker': 'toggleSlotMachine'
   }
 
 /**

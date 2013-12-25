@@ -3,8 +3,6 @@ var Picker = require('../../picker')
   , AppView
   , App;
 
-// require('phantom-limb');
-
 AppView = Ribcage.extend({
   template: require('./app.hbs')
 , quantity: 50
@@ -39,7 +37,7 @@ AppView = Ribcage.extend({
         quantity: {
           values: threes
         , style: 'right'
-        , defaultKey: 30
+        , defaultKey: 60
         }
       , unit: {
           values: {
@@ -93,7 +91,4 @@ AppView = Ribcage.extend({
   }
 });
 
-App = new AppView({});
-document.body.appendChild(App.el);
-App.el.id = 'app';
-App.render();
+App = new AppView({el: document.getElementById('app')});

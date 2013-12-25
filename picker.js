@@ -215,8 +215,21 @@ Picker = Ribcage.extend({
       , isReady = swWrapper.height() > 0;
 
     // Everything beyond here is slotmachine stuff
-    if(!this.slotMachineCapable)
+    if(!this.slotMachineCapable) {
+      each(this.slots, function (slot, k) {
+        // Align the slot at its default key if it is not already open
+        if (!this.defaultsApplied && slot.defaultKey != null) {
+          self.setSlotKey(k, slot.defaultKey);
+        }
+        else if(self.currentSelection[k]) {
+          self.setSlotKey(k, self.currentSelection[k].key);
+        }
+      });
+
+      this.defaultsApplied = true;
+
       return this;
+    }
 
     this.activeSlot = null;
 

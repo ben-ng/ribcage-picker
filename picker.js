@@ -23,6 +23,7 @@ Picker = Ribcage.extend({
                       modernizr.csstransforms3d &&
                       modernizr.touch
 , slotMachineOpen: false
+, disableToggle: false
 , events: {
     'change .js-select': 'onSelectChange'
   , 'touchend .rp-select-blocker': 'toggleSlotMachine'
@@ -44,6 +45,8 @@ Picker = Ribcage.extend({
 
     if(opts.onChange)
       this.onChange = bind(opts.onChange, this);
+
+    this.disableToggle = opts.disableToggle === true;
 
     // Everything beyond here is slotmachine stuff
     if(!this.slotMachineCapable)
@@ -95,11 +98,11 @@ Picker = Ribcage.extend({
   }
 
 , toggleSlotMachine: function () {
-    if(this.slotMachineOpen) {
-      this.$('.rp-wrapper').removeClass('rp-wrapper-open');
+    if(!this.slotMachineOpen || this.disableToggle) {
+      this.$('.rp-wrapper').addClass('rp-wrapper-open');
     }
     else {
-      this.$('.rp-wrapper').addClass('rp-wrapper-open');
+      this.$('.rp-wrapper').removeClass('rp-wrapper-open');
     }
     this.slotMachineOpen = !this.slotMachineOpen;
   }
@@ -199,7 +202,7 @@ Picker = Ribcage.extend({
     return {
       slots: this.slots
     , slotMachineCapable: this.slotMachineCapable
-    , slotMachineOpen: this.slotMachineOpen
+    , slotMachineOpen: this.disableToggle ? true : this.slotMachineOpen
     };
   }
 

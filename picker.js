@@ -111,14 +111,30 @@ Picker = Ribcage.extend({
 * Clean up the events we added in afterInit
 */
 , beforeClose: function () {
-
-    // Everything beyond here is slotmachine stuff
-    if(!this.slotMachineCapable)
-      return this;
+    var swFrame = this.$('.rp-frame')[0];
 
     window.removeEventListener('orientationchange', this.calculateSlotWidths, true);
     window.removeEventListener('resize', this.calculateSlotWidths, true);
-    this.$('.rp-frame')[0].removeEventListener('touchstart', this.onTouchStart, false);
+
+    for (var slotKey in this.slots) {
+      if(this.slots[slotKey].el) {
+        this.slots[slotKey].el.removeEventListener('webkitTransitionEnd', this.slots[slotKey].returnToValidRange, false);
+        this.slots[slotKey].el.removeEventListener('webkitTransitionEnd', this.slots[slotKey].onSlotStopsSpinning, false);
+      }
+
+      delete this.slots[slotKey].returnToValidRange;
+      delete this.slots[slotKey].onSlotStopsSpinning;
+      delete this.slots[slotKey];
+    }
+
+    if(swFrame) {
+      swFrame.removeEventListener('touchstart', this.onTouchStart, false);
+      swFrame.removeEventListener('touchmove', this.scrollMove, false);
+      swFrame.removeEventListener('touchend', this.scrollEnd, false);
+    }
+
+    delete this.onChange;
+    delete this.currentSelection;
   }
 
 /**

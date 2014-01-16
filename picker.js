@@ -44,7 +44,7 @@ Picker = Ribcage.extend({
     this.slots = clone(opts.slots, true);
 
     if(opts.onChange)
-      this.onChange = bind(opts.onChange, this);
+      this.userOnChange = opts.onChange;
 
     this.disableToggle = opts.disableToggle === true;
 
@@ -98,6 +98,7 @@ Picker = Ribcage.extend({
   }
 
 , toggleSlotMachine: function () {
+    this.calculateSlotWidths();
     if(!this.slotMachineOpen || this.disableToggle) {
       this.$('.rp-wrapper').addClass('rp-wrapper-open');
     }
@@ -580,6 +581,9 @@ Picker = Ribcage.extend({
   }
 
 , onChange: function (newSelection, slotKey, slot) {
+    if(typeof this.userOnChange == 'function')
+      this.userOnChange.apply(this, arguments);
+
     if(slotKey && slot) {
       this.trigger('change:' + slotKey, newSelection[slotKey], slot, slotKey);
     }

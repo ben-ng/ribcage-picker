@@ -99,6 +99,7 @@ Picker = Ribcage.extend({
 
 , toggleSlotMachine: function () {
     this.calculateSlotWidths();
+    this.calculateMaxOffsets();
     if(!this.slotMachineOpen || this.disableToggle) {
       this.$('.rp-wrapper').addClass('rp-wrapper-open');
     }
